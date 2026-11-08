@@ -1,0 +1,14 @@
+**/node_modules
+**/.DS_Store
+**/.env*
+**/_ignore_
+
+dist
+coverage/
+.env
+.pnpm-store
+
+# Runtime data: temporary uploaded audio + downloaded Whisper models
+storage
+
+!.env.example

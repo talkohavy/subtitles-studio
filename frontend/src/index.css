@@ -1,0 +1,79 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+  --animate-fade-in: fade-in 150ms ease-out;
+  --animate-scale-in: scale-in 160ms ease-out;
+  --animate-indeterminate: indeterminate 1.2s ease-in-out infinite;
+
+  @keyframes indeterminate {
+    from {
+      left: -33%;
+    }
+    to {
+      left: 100%;
+    }
+  }
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes scale-in {
+    from {
+      opacity: 0;
+      transform: scale(0.96);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+}
+
+@layer base {
+  :root {
+    color-scheme: dark;
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    @apply bg-zinc-950 font-sans text-zinc-100 antialiased;
+    overflow: hidden;
+  }
+
+  button:not(:disabled),
+  [role='button']:not(:disabled) {
+    cursor: pointer;
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-zinc-700) transparent;
+  }
+}
+
+@utility checkerboard {
+  background-color: var(--color-zinc-900);
+  background-image:
+    linear-gradient(45deg, var(--color-zinc-800) 25%, transparent 25%),
+    linear-gradient(-45deg, var(--color-zinc-800) 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, var(--color-zinc-800) 75%),
+    linear-gradient(-45deg, transparent 75%, var(--color-zinc-800) 75%);
+  background-size: 20px 20px;
+  background-position:
+    0 0,
+    0 10px,
+    10px -10px,
+    -10px 0;
+}

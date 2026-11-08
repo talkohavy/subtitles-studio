@@ -1,0 +1,27 @@
+---
+description: HTTP and WebSocket middleware — global registrars vs module MiddlewareFactory classes, naming, placement.
+globs:
+  - "**/*.middleware.ts"
+alwaysApply: false
+---
+
+- there are 2 types of middlewares: global ones, and module specific ones.
+
+## Global middleware
+
+- global middleware should live under: `./src/middlewares/`
+- a middleware file must be named: `[name].middleware.ts`
+- global middleware is registered as a **function** exported as `registerXxxMiddleware(app: Application)` that calls `app.use(...)`.
+- **Never register middleware inside a plugin file (`*.plugin.ts`).** Plugin files must not call `app.use(...)` under any circumstances.
+- register global middleware in `buildApp.ts` via `AppFactory.registerMiddleware([...])`, **after** `registerPlugins` and **before** `registerModules`.
+- order matters when middleware depends on plugin-attached services (e.g. logger, config).
+
+## Module-specific middleware
+
+- a module specific middleware should always live as part of a module, and be located at: `./src/modules/[module-name]/middleware/`
+- never create a module specific middleware as a function. always as a class.
+- a middleware class should implement the `MiddlewareFactory` interface.
+- methods not on the `MiddlewareFactory` interface spec should be private.
+- an http middleware class always accepts `private readonly app: Application` as its first argument.
+- a websocket middleware class always accepts `private readonly wsApp: WebSocketServer` as its first argument.
+- a module specific middleware can only be instantiated by its domain module main class, under which it lives.
