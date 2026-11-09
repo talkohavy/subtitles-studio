@@ -4,6 +4,7 @@ import { Button } from '../../components/ui/Button';
 import { ProgressBar } from '../../components/ui/ProgressBar';
 import { useAppDispatch, useAppSelector } from '../../store';
 import { selectSession } from '../../store/selectors';
+import { ProcessingTasks, SessionPhases, type SessionState } from '../../store/slices/session.slice';
 import { getLanguageName } from '../new-video/languages';
 import { useTranscriptionOptions } from '../new-video/useTranscriptionOptions';
 import { cancelProcessing } from '../transcription/transcriptionPipeline';
@@ -25,9 +26,7 @@ export function ProcessingOverlay() {
   return (
     <div className='absolute inset-0 z-10 flex animate-fade-in items-center justify-center bg-zinc-950/75 p-4 backdrop-blur-sm'>
       <div className='w-full max-w-md animate-scale-in rounded-2xl border border-zinc-800 bg-zinc-900/95 p-6 shadow-2xl'>
-        <h2 className='text-base font-semibold text-zinc-50'>
-          {session.isTranslationOnly ? 'Translating your subtitles' : 'Creating your subtitles'}
-        </h2>
+        <h2 className='text-base font-semibold text-zinc-50'>{getTitle(session)}</h2>
         {session.fileName && <p className='mt-0.5 truncate text-sm text-zinc-500'>{session.fileName}</p>}
         <ol className='mt-5 space-y-3.5'>
           {steps.map((step) => (
@@ -50,6 +49,18 @@ export function ProcessingOverlay() {
       </div>
     </div>
   );
+}
+
+function getTitle(session: SessionState): string {
+  const isTranslating = session.phase === SessionPhases.Translating;
+
+  if (session.task === ProcessingTasks.Translate) return 'Translating your subtitles';
+
+  if (session.task === ProcessingTasks.AddSubtitlesFile) {
+    return isTranslating ? 'Translating your subtitles' : 'Adding your subtitles';
+  }
+
+  return 'Creating your subtitles';
 }
 
 function ProcessingStepRow(props: { step: ProcessingStep }) {

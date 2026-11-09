@@ -28,21 +28,33 @@ import { settingsChanged } from '../../store/slices/settings.slice';
 import { cueSelected } from '../../store/slices/ui.slice';
 import { pollJob } from '../processing/pollJob';
 import { finishRun, startRun, stopActiveRun, type ProcessingRun } from '../processing/processingRun';
-import { translateTranscript } from '../translation/translationPipeline';
+import { addSubtitlesFile } from '../subtitles/subtitlesFileThunks';
+import { translateNewSubtitles } from '../translation/translationPipeline';
 import type { AppDispatch, AppThunk, RootState } from '../../store';
 import type { TranscriptionJob } from '@src/lib/api/types';
 import type { CaptionLengthValues } from '@src/lib/subtitles/constants';
+import type { SubtitlesFile } from '@src/lib/subtitles/import/readSubtitlesFile';
 import type { Word } from '@src/lib/subtitles/types';
 
 const PROGRESS_DISPATCH_INTERVAL_MS = 100;
 const TRANSCRIPT_PREVIEW_WORDS = 30;
 const WAVEFORM_PEAKS_PER_SECOND = 100;
 
+type OpenVideoProps = {
+  file: File;
+  /**
+   * Used as the video's subtitles instead of transcribing it.
+   */
+  subtitles: SubtitlesFile | null;
+};
+
 /**
  * Opens a video and transcribes it: reads the file, extracts its audio in the browser, uploads only the audio,
- * and turns the transcript into captions.
+ * and turns the transcript into captions. With a subtitles file, its subtitles are used instead.
  */
-export function openVideo(file: File): AppThunk<Promise<void>> {
+export function openVideo(props: OpenVideoProps): AppThunk<Promise<void>> {
+  const { file, subtitles } = props;
+
   return async function openVideoThunk(dispatch, getState) {
     if (file.size > MAX_VIDEO_FILE_BYTES) {
       toast.error('This video is too large. Videos can be up to 2 GB.');
@@ -51,17 +63,26 @@ export function openVideo(file: File): AppThunk<Promise<void>> {
 
     const run = startRun();
     const { signal } = run.controller;
+    const subtitlesFileName = subtitles?.fileName ?? null;
+    const { translationLanguage } = getState().settings;
 
     player.pause();
     mediaStore.setFile(file);
     dispatch(projectCleared());
     dispatch(cueSelected(null));
-    dispatch(sessionStarted({ fileName: file.name, fileSize: file.size }));
+    dispatch(sessionStarted({ fileName: file.name, fileSize: file.size, subtitlesFileName, translationLanguage }));
 
     try {
       const videoInfo = await probeVideo(file);
       signal.throwIfAborted();
       dispatch(videoProbed(videoInfo));
+
+      if (subtitles) {
+        if (videoInfo.hasAudio) loadWaveformInBackground(file);
+
+        await addSubtitlesFile({ run, dispatch, getState, subtitles });
+        return;
+      }
 
       if (!videoInfo.hasAudio) {
         finishRun(run);
@@ -95,7 +116,7 @@ export function retranscribe(props: { language: string; modelId: string | null }
     dispatch(settingsChanged({ language, modelId }));
 
     if (!wav) {
-      if (file) await dispatch(openVideo(file));
+      if (file) await dispatch(openVideo({ file, subtitles: null }));
       return;
     }
 
@@ -203,7 +224,7 @@ async function runTranscription(props: RunTranscriptionProps): Promise<void> {
   dispatch(projectLoaded({ cues, language: job.language }));
 
   if (cues.length > 0 && translationLanguage) {
-    await translateTranscript({
+    await translateNewSubtitles({
       run,
       dispatch,
       getState,
@@ -271,6 +292,27 @@ function toTranscriptionProgress(job: TranscriptionJob): TranscriptionProgress {
     modelDownload: job.modelDownload,
     wordsTotal: job.wordsTotal,
   };
+}
+
+/**
+ * Extracts the audio just to draw the timeline's waveform. Stops when another video is opened, and failing only
+ * means there's no waveform.
+ */
+function loadWaveformInBackground(file: File) {
+  const controller = new AbortController();
+  const unsubscribe = mediaStore.subscribe(() => {
+    if (mediaStore.getSnapshot().file !== file) controller.abort();
+  });
+
+  extractAudio({ file, onProgress: () => {}, signal: controller.signal })
+    .then(({ wav, offsetSec }) => {
+      if (controller.signal.aborted || mediaStore.getSnapshot().wav) return;
+
+      const waveform = computeWaveformPeaks({ wav, peaksPerSecond: WAVEFORM_PEAKS_PER_SECOND });
+      mediaStore.setAudio({ wav, audioOffsetSec: offsetSec, waveform });
+    })
+    .catch(() => {})
+    .finally(unsubscribe);
 }
 
 function handleRunError(props: { run: ProcessingRun; error: unknown; dispatch: AppDispatch }) {

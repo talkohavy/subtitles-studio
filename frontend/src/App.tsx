@@ -1,6 +1,7 @@
 import { ExportDialog } from './features/export/ExportDialog';
 import { GlobalDropOverlay } from './features/new-video/GlobalDropOverlay';
 import { NewVideoDialog } from './features/new-video/NewVideoDialog';
+import { VideoSetupDialog } from './features/new-video/VideoSetupDialog';
 import { PreviewStage } from './features/preview/PreviewStage';
 import { useKeyboardShortcuts } from './features/shortcuts/useKeyboardShortcuts';
 import { SidePanel } from './features/side-panel/SidePanel';
@@ -33,6 +34,7 @@ export function App() {
         )}
       </div>
       <NewVideoDialog />
+      <VideoSetupDialog />
       <ExportDialog />
       <GlobalDropOverlay />
     </div>

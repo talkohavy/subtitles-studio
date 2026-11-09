@@ -8,7 +8,8 @@ import { SwitchField } from '../../components/ui/SwitchField';
 import { useAppDispatch, useAppSelector } from '../../store';
 import { selectCues, selectIsEditable, selectLanguage, selectSettings } from '../../store/selectors';
 import { cuesReplaced } from '../../store/slices/project.slice';
-import { TranscriptionSettingsFields } from '../new-video/TranscriptionSettingsFields';
+import { TranscriptionFields } from '../new-video/TranscriptionFields';
+import { TranslateToField } from '../new-video/TranslateToField';
 import { PanelBody, PanelLayout } from '../side-panel/PanelLayout';
 import { CaptionLengthSetting } from '../subtitles/CaptionSettingsPopover';
 import { retranscribe } from '../transcription/transcriptionPipeline';
@@ -173,7 +174,8 @@ function TranscribeAgainSection(props: { isEditable: boolean }) {
       <p className='text-xs text-zinc-500'>
         Mistakes in the transcript? Try a more accurate model, or set the language instead of detecting it.
       </p>
-      <TranscriptionSettingsFields disabled={!isEditable} />
+      <TranscriptionFields disabled={!isEditable} />
+      <TranslateToField disabled={!isEditable} />
       <Button className='w-full' onClick={handleTranscribeAgain} disabled={!isEditable}>
         <RotateCcw className='size-4' />
         Transcribe again

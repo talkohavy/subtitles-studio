@@ -21,7 +21,7 @@ export type ProjectState = {
   style: SubtitleStyle;
   canvas: CanvasSettings;
   /**
-   * The transcript's language, which decides how text splits into words.
+   * The subtitles' language, which decides how text splits into words.
    */
   language: string | null;
 };
@@ -158,6 +158,14 @@ const projectSlice = createSlice({
       prepare: prepareWithHistory<{ cues: Array<Cue>; language: string }>(),
     },
 
+    cuesImported: {
+      reducer(state, action: HistoryAction<{ cues: Array<Cue>; language: string | null }>) {
+        state.cues = action.payload.cues;
+        state.language = action.payload.language;
+      },
+      prepare: prepareWithHistory<{ cues: Array<Cue>; language: string | null }>(),
+    },
+
     styleChanged: {
       reducer(state, action: HistoryAction<Partial<SubtitleStyle>>) {
         Object.assign(state.style, action.payload);
@@ -206,6 +214,7 @@ export const {
   cueDeleted,
   cuesReplaced,
   cuesTranslated,
+  cuesImported,
   styleChanged,
   presetApplied,
   canvasChanged,

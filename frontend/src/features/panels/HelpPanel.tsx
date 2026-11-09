@@ -21,6 +21,8 @@ const TIPS: ReadonlyArray<string> = [
   'Hold Ctrl (or ⌘) and scroll over the timeline to zoom.',
   'Changing a subtitle’s text keeps its timing, word by word where possible.',
   'Translate the subtitles into another language from the Translate panel; undo brings back the original.',
+  'Have subtitles already? Drop the video and its SRT, VTT, ASS or SBV file together, and pick “Use my subtitles file” to skip transcribing, or to just translate them.',
+  'Drop a subtitles file on the open video to use its subtitles instead; undo brings back the ones you had.',
 ];
 
 export function HelpPanel() {
@@ -58,7 +60,7 @@ export function HelpPanel() {
             Your video never leaves your browser: the audio is extracted on your computer, and only that audio is sent
             to the transcription server, which runs an open-source Whisper model and deletes the audio once it’s done.
             Translations run on the same server with Meta’s open-source NLLB model, and only the subtitles’ text is
-            sent. Exports are made in your browser, too.
+            sent. Subtitles files you add are read in your browser, and exports are made there, too.
           </p>
         </PanelSection>
       </PanelBody>

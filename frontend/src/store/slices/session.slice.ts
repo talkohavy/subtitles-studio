@@ -15,6 +15,20 @@ export const SessionPhases = {
 
 export type SessionPhaseValues = (typeof SessionPhases)[keyof typeof SessionPhases];
 
+/**
+ * Where the subtitles being processed come from.
+ */
+export const ProcessingTasks = {
+  Transcribe: 'transcribe',
+  AddSubtitlesFile: 'add-subtitles-file',
+  /**
+   * Translating the existing subtitles.
+   */
+  Translate: 'translate',
+} as const;
+
+export type ProcessingTaskValues = (typeof ProcessingTasks)[keyof typeof ProcessingTasks];
+
 export type TranscriptionProgress = Pick<
   TranscriptionJob,
   | 'id'
@@ -60,11 +74,22 @@ export type SessionState = {
    * The language the subtitles are translated into as part of the processing, if any.
    */
   translationLanguage: string | null;
+  task: ProcessingTaskValues;
   /**
-   * The processing translates the existing subtitles, without transcribing.
+   * The subtitles file used instead of transcribing, if any.
    */
-  isTranslationOnly: boolean;
+  subtitlesFileName: string | null;
   translation: TranslationProgress | null;
+};
+
+type SessionStartedPayload = {
+  fileName: string;
+  fileSize: number;
+  /**
+   * Set when the subtitles come from this file instead of a transcription.
+   */
+  subtitlesFileName: string | null;
+  translationLanguage: string | null;
 };
 
 const initialState: SessionState = {
@@ -80,7 +105,8 @@ const initialState: SessionState = {
   requestedLanguage: 'auto',
   requestedModelId: null,
   translationLanguage: null,
-  isTranslationOnly: false,
+  task: ProcessingTasks.Transcribe,
+  subtitlesFileName: null,
   translation: null,
 };
 
@@ -88,12 +114,17 @@ const sessionSlice = createSlice({
   name: 'session',
   initialState,
   reducers: {
-    sessionStarted(state, action: PayloadAction<{ fileName: string; fileSize: number }>) {
+    sessionStarted(state, action: PayloadAction<SessionStartedPayload>) {
+      const { fileName, fileSize, subtitlesFileName, translationLanguage } = action.payload;
+
       return {
         ...initialState,
         phase: SessionPhases.Probing,
-        fileName: action.payload.fileName,
-        fileSize: action.payload.fileSize,
+        fileName,
+        fileSize,
+        task: subtitlesFileName ? ProcessingTasks.AddSubtitlesFile : ProcessingTasks.Transcribe,
+        subtitlesFileName,
+        translationLanguage,
         requestedLanguage: state.requestedLanguage,
         requestedModelId: state.requestedModelId,
       };
@@ -110,7 +141,7 @@ const sessionSlice = createSlice({
       state.requestedLanguage = action.payload.language;
       state.requestedModelId = action.payload.modelId;
       state.translationLanguage = action.payload.translationLanguage;
-      state.isTranslationOnly = false;
+      state.task = ProcessingTasks.Transcribe;
       state.transcription = null;
       state.translation = null;
       state.transcriptPreview = '';
@@ -119,7 +150,7 @@ const sessionSlice = createSlice({
 
     translationRequested(state, action: PayloadAction<{ targetLanguage: string }>) {
       state.translationLanguage = action.payload.targetLanguage;
-      state.isTranslationOnly = true;
+      state.task = ProcessingTasks.Translate;
       state.translation = null;
       state.transcriptPreview = '';
       state.error = null;

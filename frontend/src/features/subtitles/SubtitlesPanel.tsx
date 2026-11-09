@@ -1,16 +1,19 @@
 import { useEffect, useRef } from 'react';
-import { Captions, Plus } from 'lucide-react';
+import { Captions, FileUp, Plus } from 'lucide-react';
 import { formatTime } from '@src/common/utils/formatTime';
 import { player } from '@src/lib/player/playerController';
 import { usePlayerState } from '@src/lib/player/usePlayerState';
 import { findCueIndexAtTime } from '@src/lib/subtitles/cueOperations';
-import { Button } from '../../components/ui/Button';
+import { ACCEPTED_SUBTITLES_TYPES } from '@src/lib/subtitles/import/constants';
+import { Button, IconButton } from '../../components/ui/Button';
+import { useFilePicker } from '../../hooks/useFilePicker';
 import { useAppDispatch, useAppSelector } from '../../store';
 import { selectCues, selectIsEditable, selectIsProcessing, selectSelectedCueId } from '../../store/selectors';
 import { PanelLayout } from '../side-panel/PanelLayout';
 import { CaptionSettingsPopover } from './CaptionSettingsPopover';
 import { CueCard } from './CueCard';
 import { addCueAtTime } from './cueThunks';
+import { importSubtitlesFile } from './subtitlesFileThunks';
 
 export function SubtitlesPanel() {
   const cues = useAppSelector(selectCues);
@@ -42,7 +45,12 @@ export function SubtitlesPanel() {
     <PanelLayout
       title='Subtitles'
       badge={cues.length > 0 ? cues.length : undefined}
-      actions={<CaptionSettingsPopover />}
+      actions={
+        <>
+          <ImportSubtitlesFileButton isEditable={isEditable} />
+          <CaptionSettingsPopover />
+        </>
+      }
       footer={isEditable ? <AddCueAtPlayheadButton /> : undefined}
     >
       {isWaitingForTranscript && <TranscriptPlaceholder />}
@@ -98,6 +106,8 @@ function TranscriptPlaceholder() {
 function NoCues(props: { isEditable: boolean }) {
   const { isEditable } = props;
 
+  const { fileInput, openFilePicker } = useSubtitlesFileImport();
+
   return (
     <div className='flex flex-col items-center gap-3 px-6 py-16 text-center'>
       <span className='flex size-12 items-center justify-center rounded-full bg-zinc-900 text-zinc-500'>
@@ -106,9 +116,50 @@ function NoCues(props: { isEditable: boolean }) {
       <p className='text-sm text-zinc-300'>No subtitles yet</p>
       <p className='text-xs text-zinc-500'>
         {isEditable
-          ? 'Add one at the playhead, or double-click the timeline.'
+          ? 'Add one at the playhead, double-click the timeline, or use a subtitles file you have.'
           : 'Drop a video to transcribe it into subtitles.'}
       </p>
+      {isEditable && (
+        <Button size='sm' onClick={openFilePicker} className='mt-1'>
+          <FileUp className='size-3.5' />
+          Import a subtitles file
+        </Button>
+      )}
+      {fileInput}
     </div>
   );
+}
+
+function ImportSubtitlesFileButton(props: { isEditable: boolean }) {
+  const { isEditable } = props;
+
+  const { fileInput, openFilePicker } = useSubtitlesFileImport();
+
+  return (
+    <>
+      <IconButton
+        label='Import a subtitles file'
+        icon={<FileUp className='size-4' />}
+        onClick={openFilePicker}
+        disabled={!isEditable}
+      />
+      {fileInput}
+    </>
+  );
+}
+
+/**
+ * A file picker whose subtitles file replaces the open video's subtitles.
+ */
+function useSubtitlesFileImport() {
+  const dispatch = useAppDispatch();
+
+  const filePicker = useFilePicker({
+    accept: ACCEPTED_SUBTITLES_TYPES,
+    onFiles: ([file]) => {
+      if (file) void dispatch(importSubtitlesFile(file));
+    },
+  });
+
+  return filePicker;
 }

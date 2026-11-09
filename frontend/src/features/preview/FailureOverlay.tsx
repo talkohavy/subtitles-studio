@@ -1,18 +1,32 @@
 import { CircleExclamationPoint, RotateCcw } from 'lucide-react';
+import { ACCEPTED_SUBTITLES_TYPES } from '@src/lib/subtitles/import/constants';
 import { Button } from '../../components/ui/Button';
+import { useFilePicker } from '../../hooks/useFilePicker';
 import { useMediaState } from '../../hooks/useMediaState';
 import { useAppDispatch, useAppSelector } from '../../store';
 import { selectCues, selectSession, selectSettings } from '../../store/selectors';
-import { sessionReady } from '../../store/slices/session.slice';
+import { ProcessingTasks, sessionReady } from '../../store/slices/session.slice';
 import { newVideoDialogToggled } from '../../store/slices/ui.slice';
+import { videoSetupStore } from '../new-video/videoSetupStore';
 import { retranscribe } from '../transcription/transcriptionPipeline';
 
 export function FailureOverlay() {
   const dispatch = useAppDispatch();
-  const { error } = useAppSelector(selectSession);
+  const { error, task, video } = useAppSelector(selectSession);
   const { language, modelId } = useAppSelector(selectSettings);
   const hasCues = useAppSelector(selectCues).length > 0;
   const { file } = useMediaState();
+  const { fileInput, openFilePicker } = useFilePicker({
+    accept: ACCEPTED_SUBTITLES_TYPES,
+    onFiles: ([subtitlesFile]) => {
+      if (file && subtitlesFile) videoSetupStore.open({ videoFile: file, subtitlesFile });
+    },
+  });
+
+  // Trying again transcribes the video, which isn't what failed when it came with subtitles.
+  const canTryAgain = file !== null && task !== ProcessingTasks.AddSubtitlesFile;
+  // The video itself has to have opened, for its subtitles to come from a file.
+  const canUseSubtitlesFile = file !== null && video !== null && !hasCues;
 
   return (
     <div className='absolute inset-0 z-10 flex animate-fade-in items-center justify-center bg-zinc-950/75 p-4 backdrop-blur-sm'>
@@ -28,18 +42,24 @@ export function FailureOverlay() {
           <Button variant='ghost' size='sm' onClick={() => dispatch(newVideoDialogToggled(true))}>
             Choose another video
           </Button>
+          {canUseSubtitlesFile && (
+            <Button size='sm' onClick={openFilePicker}>
+              Use a subtitles file
+            </Button>
+          )}
           {hasCues && (
             <Button size='sm' onClick={() => dispatch(sessionReady())}>
               Keep my subtitles
             </Button>
           )}
-          {file && (
+          {canTryAgain && (
             <Button variant='primary' size='sm' onClick={() => void dispatch(retranscribe({ language, modelId }))}>
               <RotateCcw className='size-3.5' />
               Try again
             </Button>
           )}
         </div>
+        {fileInput}
       </div>
     </div>
   );

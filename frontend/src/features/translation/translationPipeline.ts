@@ -58,30 +58,30 @@ export function translateSubtitles(props: TranslateSubtitlesProps): AppThunk<Pro
   };
 }
 
-type TranslateTranscriptProps = {
+type TranslateNewSubtitlesProps = {
   run: ProcessingRun;
   dispatch: AppDispatch;
   getState: () => RootState;
   /**
-   * The transcript's language; `null` when unknown.
+   * The subtitles' language; `null` when unknown.
    */
   sourceLanguage: string | null;
   targetLanguage: string;
 };
 
 /**
- * Translates a transcript that was just turned into subtitles. When the translation fails, the subtitles stay in
- * the spoken language.
+ * Translates subtitles that were just made (transcribed, or read from a file) as part of the same processing. When
+ * the translation fails, the subtitles stay in their language.
  *
  * @throws only when the run was stopped.
  */
-export async function translateTranscript(props: TranslateTranscriptProps): Promise<void> {
+export async function translateNewSubtitles(props: TranslateNewSubtitlesProps): Promise<void> {
   const { run, dispatch, getState, sourceLanguage, targetLanguage } = props;
 
   if (!sourceLanguage) return;
 
   if (sourceLanguage === targetLanguage) {
-    toast.info(`The video is already in ${getLanguageName(targetLanguage)}, so there’s nothing to translate.`);
+    toast.info(`The subtitles are already in ${getLanguageName(targetLanguage)}, so there’s nothing to translate.`);
     return;
   }
 

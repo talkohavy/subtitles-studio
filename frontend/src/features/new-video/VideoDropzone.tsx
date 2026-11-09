@@ -1,62 +1,53 @@
-import { useRef, useState, type DragEvent } from 'react';
 import { Upload } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@src/common/utils/cn';
 import { ACCEPTED_VIDEO_TYPES } from '@src/lib/media/constants';
-import { isVideoFile } from '@src/lib/media/isVideoFile';
+import { ACCEPTED_SUBTITLES_TYPES } from '@src/lib/subtitles/import/constants';
+import { useFileDrop } from '../../hooks/useFileDrop';
+import { useFilePicker } from '../../hooks/useFilePicker';
+import { sortDroppedFiles } from './sortDroppedFiles';
 
 type VideoDropzoneProps = {
-  onFile: (file: File) => void;
+  /**
+   * Called with the video, and the subtitles file dropped or chosen with it, if any.
+   */
+  onFiles: (files: { videoFile: File; subtitlesFile: File | null }) => void;
   disabled?: boolean;
   className?: string;
 };
 
 export function VideoDropzone(props: VideoDropzoneProps) {
-  const { onFile, disabled, className } = props;
+  const { onFiles, disabled, className } = props;
 
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [isDragOver, setIsDragOver] = useState(false);
+  function handleFiles(files: Array<File>) {
+    const { videoFile, subtitlesFile, otherFile } = sortDroppedFiles(files);
 
-  function handleFiles(files: FileList | null) {
-    const file = files?.[0];
-
-    if (!file) return;
-
-    if (!isVideoFile(file)) {
-      toast.error(`“${file.name}” isn’t a video. Try an MP4, MOV, WebM or MKV file.`);
+    if (videoFile) {
+      onFiles({ videoFile, subtitlesFile });
       return;
     }
 
-    onFile(file);
+    if (subtitlesFile) {
+      toast.error(`Add the video of “${subtitlesFile.name}” too: drop or choose them together.`);
+      return;
+    }
+
+    if (otherFile) toast.error(`“${otherFile.name}” isn’t a video. Try an MP4, MOV, WebM or MKV file.`);
   }
 
-  function handleDragOver(event: DragEvent<HTMLButtonElement>) {
-    event.preventDefault();
-
-    if (!disabled) setIsDragOver(true);
-  }
-
-  function handleDragLeave(event: DragEvent<HTMLButtonElement>) {
-    if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setIsDragOver(false);
-  }
-
-  function handleDrop(event: DragEvent<HTMLButtonElement>) {
-    event.preventDefault();
-    // The window-wide drop handler would open the file a second time.
-    event.stopPropagation();
-    setIsDragOver(false);
-
-    if (!disabled) handleFiles(event.dataTransfer.files);
-  }
+  const { isDragOver, dropHandlers } = useFileDrop({ onFiles: handleFiles, disabled });
+  const { fileInput, openFilePicker } = useFilePicker({
+    accept: `${ACCEPTED_VIDEO_TYPES},${ACCEPTED_SUBTITLES_TYPES}`,
+    onFiles: handleFiles,
+    multiple: true,
+  });
 
   return (
     <>
       <button
         type='button'
-        onClick={() => inputRef.current?.click()}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
+        onClick={openFilePicker}
+        {...dropHandlers}
         disabled={disabled}
         className={cn(
           'flex w-full flex-col items-center gap-3 rounded-xl border-2 border-dashed px-6 py-10 text-center transition-colors',
@@ -73,19 +64,11 @@ export function VideoDropzone(props: VideoDropzoneProps) {
         <span className='text-sm font-medium text-zinc-100'>
           Drop a video or <span className='text-violet-400'>click to browse</span>
         </span>
-        <span className='text-xs text-zinc-500'>MP4, MOV, WebM, MKV up to 2 GB</span>
+        <span className='text-xs text-zinc-500'>
+          MP4, MOV, WebM, MKV up to 2 GB. Have subtitles for it? Add the file too.
+        </span>
       </button>
-      <input
-        ref={inputRef}
-        type='file'
-        accept={ACCEPTED_VIDEO_TYPES}
-        className='hidden'
-        onChange={(event) => {
-          handleFiles(event.currentTarget.files);
-          // So choosing the same file again still triggers a change.
-          event.currentTarget.value = '';
-        }}
-      />
+      {fileInput}
     </>
   );
 }

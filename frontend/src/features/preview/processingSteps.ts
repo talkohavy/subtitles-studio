@@ -5,7 +5,7 @@ import {
   TranslationStages,
   type ModelDownloadProgress,
 } from '@src/lib/api/types';
-import { SessionPhases, type SessionState } from '../../store/slices/session.slice';
+import { ProcessingTasks, SessionPhases, type SessionState } from '../../store/slices/session.slice';
 
 export const ProcessingStepStatuses = {
   Done: 'done',
@@ -40,13 +40,10 @@ type GetProcessingStepsProps = {
 export function getProcessingSteps(props: GetProcessingStepsProps): Array<ProcessingStep> {
   const { session, getLanguageName, getModelName } = props;
 
-  const transcriptionSteps = session.isTranslationOnly
-    ? []
-    : getTranscriptionStepDefinitions({ session, getLanguageName, getModelName });
   const translationSteps = session.translationLanguage
     ? getTranslationStepDefinitions({ session, targetLanguage: session.translationLanguage, getLanguageName })
     : [];
-  const definitions = [...transcriptionSteps, ...translationSteps];
+  const definitions = [...getTaskStepDefinitions({ session, getLanguageName, getModelName }), ...translationSteps];
   const activeStepId = getActiveStepId(session);
   const activeIndex = definitions.findIndex((definition) => definition.id === activeStepId);
 
@@ -71,10 +68,47 @@ type StepDefinition = {
   isAlwaysDone: boolean;
 };
 
+/**
+ * The steps that make the subtitles, before any translation.
+ */
+function getTaskStepDefinitions(props: GetProcessingStepsProps): Array<StepDefinition> {
+  const { session } = props;
+
+  if (session.task === ProcessingTasks.Translate) return [];
+
+  if (session.task === ProcessingTasks.AddSubtitlesFile) {
+    const subtitlesFileStep: StepDefinition = {
+      id: 'subtitles-file',
+      label: 'Adding your subtitles',
+      activeDetail: null,
+      doneDetail: session.subtitlesFileName,
+      activeProgress: null,
+      isAlwaysDone: false,
+    };
+
+    return [getReadStepDefinition(session), subtitlesFileStep];
+  }
+
+  return getTranscriptionStepDefinitions(props);
+}
+
+function getReadStepDefinition(session: SessionState): StepDefinition {
+  const { video } = session;
+
+  return {
+    id: 'read',
+    label: 'Reading the video',
+    activeDetail: null,
+    doneDetail: video ? `${video.width}×${video.height} · ${formatTime(video.durationSec)}` : null,
+    activeProgress: null,
+    isAlwaysDone: false,
+  };
+}
+
 function getTranscriptionStepDefinitions(props: GetProcessingStepsProps): Array<StepDefinition> {
   const { session, getLanguageName, getModelName } = props;
 
-  const { video, phaseProgress, transcription, requestedLanguage } = session;
+  const { phaseProgress, transcription, requestedLanguage } = session;
   const isLanguageRequested = requestedLanguage !== AUTO_DETECT_LANGUAGE;
   const modelDownload = transcription?.modelDownload ?? null;
   const queuePosition = transcription?.queuePosition ?? null;
@@ -82,14 +116,7 @@ function getTranscriptionStepDefinitions(props: GetProcessingStepsProps): Array<
   const languageProbability = transcription?.languageProbability ?? null;
 
   return [
-    {
-      id: 'read',
-      label: 'Reading the video',
-      activeDetail: null,
-      doneDetail: video ? `${video.width}×${video.height} · ${formatTime(video.durationSec)}` : null,
-      activeProgress: null,
-      isAlwaysDone: false,
-    },
+    getReadStepDefinition(session),
     {
       id: 'extract',
       label: 'Extracting the audio',

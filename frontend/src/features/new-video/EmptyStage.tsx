@@ -1,12 +1,9 @@
 import { Languages, ShieldCheck, Sparkles } from 'lucide-react';
-import { useAppDispatch } from '../../store';
-import { openVideo } from '../transcription/transcriptionPipeline';
-import { TranscriptionSettingsFields } from './TranscriptionSettingsFields';
 import { useTranscriptionOptions } from './useTranscriptionOptions';
 import { VideoDropzone } from './VideoDropzone';
+import { videoSetupStore } from './videoSetupStore';
 
 export function EmptyStage() {
-  const dispatch = useAppDispatch();
   const { options } = useTranscriptionOptions();
 
   const languageCount = options?.languages.length ?? 0;
@@ -17,12 +14,12 @@ export function EmptyStage() {
       <div className='mb-8 text-center'>
         <h1 className='text-3xl font-semibold tracking-tight text-zinc-50'>Add subtitles to any video</h1>
         <p className='mx-auto mt-3 max-w-md text-zinc-400'>
-          Drop a video and get accurate, word-by-word timed captions in minutes. Then style them and export.
+          Drop a video and get accurate, word-by-word timed captions in minutes, or bring a subtitles file you already
+          have. Then style, translate and export them.
         </p>
       </div>
-      <div className='space-y-5 rounded-2xl border border-zinc-800 bg-zinc-900/60 p-5 shadow-xl'>
-        <TranscriptionSettingsFields />
-        <VideoDropzone onFile={(file) => void dispatch(openVideo(file))} />
+      <div className='rounded-2xl border border-zinc-800 bg-zinc-900/60 p-5 shadow-xl'>
+        <VideoDropzone onFiles={(files) => videoSetupStore.open(files)} />
       </div>
       <ul className='mt-6 flex flex-wrap justify-center gap-x-6 gap-y-2 text-xs text-zinc-500'>
         <li className='flex items-center gap-1.5'>

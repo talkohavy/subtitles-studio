@@ -3,33 +3,30 @@ import { Button } from '../../components/ui/Button';
 import { Dialog } from '../../components/ui/Dialog';
 import { useMediaState } from '../../hooks/useMediaState';
 import { useAppDispatch, useAppSelector } from '../../store';
-import { selectCues, selectIsProcessing, selectSession, selectSettings } from '../../store/selectors';
+import { selectIsEditable, selectSession } from '../../store/selectors';
 import { newVideoDialogToggled } from '../../store/slices/ui.slice';
-import { openVideo, retranscribe } from '../transcription/transcriptionPipeline';
-import { TranscriptionSettingsFields } from './TranscriptionSettingsFields';
 import { VideoDropzone } from './VideoDropzone';
+import { videoSetupStore } from './videoSetupStore';
 
 export function NewVideoDialog() {
   const dispatch = useAppDispatch();
   const isOpen = useAppSelector((state) => state.ui.isNewVideoDialogOpen);
-  const { fileName, video } = useAppSelector(selectSession);
-  const { language, modelId } = useAppSelector(selectSettings);
-  const isProcessing = useAppSelector(selectIsProcessing);
-  const hasCues = useAppSelector(selectCues).length > 0;
+  const { fileName } = useAppSelector(selectSession);
+  const isEditable = useAppSelector(selectIsEditable);
   const { file } = useMediaState();
 
   function close() {
     dispatch(newVideoDialogToggled(false));
   }
 
-  function handleFile(newFile: File) {
+  function handleFiles(files: { videoFile: File; subtitlesFile: File | null }) {
     close();
-    void dispatch(openVideo(newFile));
+    videoSetupStore.open(files);
   }
 
-  function handleTranscribeAgain() {
+  function handleRedoSubtitles() {
     close();
-    void dispatch(retranscribe({ language, modelId }));
+    videoSetupStore.open({ videoFile: null, subtitlesFile: null });
   }
 
   return (
@@ -37,23 +34,21 @@ export function NewVideoDialog() {
       open={isOpen}
       onOpenChange={(open) => dispatch(newVideoDialogToggled(open))}
       title='New Video'
-      description='Pick the spoken language (or let it be detected) and whether to translate, then drop a video.'
+      description='Drop a video. Next, you’ll choose whether to transcribe it or use a subtitles file you have.'
     >
       <div className='space-y-5'>
-        <TranscriptionSettingsFields />
-        <VideoDropzone onFile={handleFile} />
-        {file && video?.hasAudio && (
+        <VideoDropzone onFiles={handleFiles} />
+        {file && isEditable && (
           <div className='flex items-center justify-between gap-4 rounded-xl border border-zinc-800 bg-zinc-950/50 p-3.5'>
             <div className='min-w-0 space-y-0.5'>
-              <p className='text-sm text-zinc-200'>Not happy with the transcript?</p>
-              <p className='truncate text-xs text-zinc-500'>
-                Transcribe “{fileName}” again with the settings above
-                {hasCues ? '. This replaces its current subtitles.' : '.'}
+              <p className='text-sm text-zinc-200'>Not happy with the subtitles?</p>
+              <p className='text-xs break-words text-zinc-500'>
+                Transcribe “{fileName}” again, or use a subtitles file.
               </p>
             </div>
-            <Button size='sm' onClick={handleTranscribeAgain} disabled={isProcessing}>
+            <Button size='sm' onClick={handleRedoSubtitles}>
               <RotateCcw className='size-3.5' />
-              Transcribe again
+              Redo subtitles
             </Button>
           </div>
         )}

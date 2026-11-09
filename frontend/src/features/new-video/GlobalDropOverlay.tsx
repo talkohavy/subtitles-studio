@@ -1,40 +1,77 @@
 import { useEffect, useEffectEvent, useState } from 'react';
 import { FileVideoCamera } from 'lucide-react';
 import { toast } from 'sonner';
-import { isVideoFile } from '@src/lib/media/isVideoFile';
+import { mediaStore } from '@src/lib/media/mediaStore';
 import { useAppDispatch, useAppSelector } from '../../store';
-import { selectCues, selectHasProject } from '../../store/selectors';
+import { selectHasProject, selectIsEditable, selectIsProcessing, selectSession } from '../../store/selectors';
 import { newVideoDialogToggled } from '../../store/slices/ui.slice';
-import { openVideo } from '../transcription/transcriptionPipeline';
+import { importSubtitlesFile } from '../subtitles/subtitlesFileThunks';
+import { sortDroppedFiles } from './sortDroppedFiles';
+import { useVideoSetup, videoSetupStore } from './videoSetupStore';
 
 function hasFiles(event: DragEvent): boolean {
   return event.dataTransfer?.types.includes('Files') ?? false;
 }
 
 /**
- * Lets a video be dropped anywhere on the page.
+ * Lets a video, or a subtitles file for the open one, be dropped anywhere on the page.
  */
 export function GlobalDropOverlay() {
   const dispatch = useAppDispatch();
-  const hasCues = useAppSelector(selectCues).length > 0;
   const hasProject = useAppSelector(selectHasProject);
+  const isEditable = useAppSelector(selectIsEditable);
+  const isProcessing = useAppSelector(selectIsProcessing);
+  const { video } = useAppSelector(selectSession);
   const isNewVideoDialogOpen = useAppSelector((state) => state.ui.isNewVideoDialogOpen);
+  const isVideoSetupOpen = useVideoSetup() !== null;
   const [isDragging, setIsDragging] = useState(false);
 
-  const isDropzoneVisible = !hasProject || isNewVideoDialogOpen;
+  // These show what a drop does themselves.
+  const isDropTargetShown = !hasProject || isNewVideoDialogOpen || isVideoSetupOpen;
 
-  const openDroppedFile = useEffectEvent((file: File) => {
-    if (!isVideoFile(file)) {
-      toast.error(`“${file.name}” isn’t a video. Try an MP4, MOV, WebM or MKV file.`);
+  function addDroppedSubtitlesFile(subtitlesFile: File) {
+    if (isVideoSetupOpen) {
+      videoSetupStore.setSubtitlesFile(subtitlesFile);
       return;
     }
 
-    const shouldReplace = !hasCues || window.confirm('Open this video instead? The current subtitles will be lost.');
+    if (!hasProject || isNewVideoDialogOpen) {
+      toast.error(`Add the video of “${subtitlesFile.name}” too: drop them together.`);
+      return;
+    }
 
-    if (!shouldReplace) return;
+    if (isProcessing) {
+      toast.error('Wait for the subtitles to be ready, then drop the file again.');
+      return;
+    }
 
-    dispatch(newVideoDialogToggled(false));
-    void dispatch(openVideo(file));
+    if (isEditable) {
+      void dispatch(importSubtitlesFile(subtitlesFile));
+      return;
+    }
+
+    // It failed, so the video starts over with the file's subtitles, if it opened at all.
+    const { file } = mediaStore.getSnapshot();
+
+    if (file && video) videoSetupStore.open({ videoFile: file, subtitlesFile });
+    else toast.error(`Add the video of “${subtitlesFile.name}” too: drop them together.`);
+  }
+
+  const openDroppedFiles = useEffectEvent((files: Array<File>) => {
+    const { videoFile, subtitlesFile, otherFile } = sortDroppedFiles(files);
+
+    if (videoFile) {
+      dispatch(newVideoDialogToggled(false));
+      videoSetupStore.open({ videoFile, subtitlesFile });
+      return;
+    }
+
+    if (subtitlesFile) {
+      addDroppedSubtitlesFile(subtitlesFile);
+      return;
+    }
+
+    if (otherFile) toast.error(`“${otherFile.name}” isn’t a video or a subtitles file.`);
   });
 
   useEffect(() => {
@@ -74,9 +111,9 @@ export function GlobalDropOverlay() {
 
       event.preventDefault();
 
-      const file = event.dataTransfer?.files[0];
+      const files = Array.from(event.dataTransfer?.files ?? []);
 
-      if (file) openDroppedFile(file);
+      if (files.length > 0) openDroppedFiles(files);
     }
 
     window.addEventListener('dragenter', handleDragEnter);
@@ -94,7 +131,7 @@ export function GlobalDropOverlay() {
     };
   }, []);
 
-  if (!isDragging || isDropzoneVisible) return null;
+  if (!isDragging || isDropTargetShown) return null;
 
   return (
     <div className='pointer-events-none fixed inset-0 z-[60] flex animate-fade-in items-center justify-center bg-zinc-950/80 p-6 backdrop-blur-sm'>
@@ -102,8 +139,8 @@ export function GlobalDropOverlay() {
         <span className='flex size-16 items-center justify-center rounded-full bg-violet-500/20 text-violet-300'>
           <FileVideoCamera className='size-7' />
         </span>
-        <p className='text-lg font-medium text-zinc-50'>Drop your video to create subtitles</p>
-        <p className='text-sm text-zinc-400'>MP4, MOV, WebM, MKV up to 2 GB</p>
+        <p className='text-lg font-medium text-zinc-50'>Drop a video or a subtitles file</p>
+        <p className='text-sm text-zinc-400'>A video starts over. A subtitles file replaces the current subtitles.</p>
       </div>
     </div>
   );

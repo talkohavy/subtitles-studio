@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vite-plus/test';
 import { AUTO_DETECT_LANGUAGE, JobStatuses, TranscriptionStages, TranslationStages } from '@src/lib/api/types';
 import {
+  ProcessingTasks,
   SessionPhases,
   type SessionState,
   type TranscriptionProgress,
@@ -43,7 +44,8 @@ function makeSession(props: Partial<SessionState>): SessionState {
     requestedLanguage: AUTO_DETECT_LANGUAGE,
     requestedModelId: null,
     translationLanguage: null,
-    isTranslationOnly: false,
+    task: ProcessingTasks.Transcribe,
+    subtitlesFileName: null,
     translation: null,
     ...props,
   };
@@ -179,7 +181,7 @@ describe('getProcessingSteps', () => {
     const session = makeSession({
       phase: SessionPhases.Translating,
       translationLanguage: 'he',
-      isTranslationOnly: true,
+      task: ProcessingTasks.Translate,
       translation,
     });
 
@@ -189,6 +191,26 @@ describe('getProcessingSteps', () => {
     const expectedResult = [
       ['Loading the translation model', 'active'],
       ['Translating to language:he', 'pending'],
+    ];
+    expect(actualResult).toEqual(expectedResult);
+  });
+
+  it('should add a subtitles file instead of transcribing when the video comes with one', () => {
+    const session = makeSession({
+      phase: SessionPhases.Translating,
+      translationLanguage: 'he',
+      task: ProcessingTasks.AddSubtitlesFile,
+      subtitlesFileName: 'clip.en.srt',
+    });
+
+    const steps = getProcessingSteps({ session, getLanguageName: String, getModelName: String });
+    const actualResult = steps.map((step) => [step.id, step.status, step.detail]);
+
+    const expectedResult = [
+      ['read', 'done', '1280×720 · 1:23.2'],
+      ['subtitles-file', 'done', 'clip.en.srt'],
+      ['translation-model', 'active', null],
+      ['translate', 'pending', null],
     ];
     expect(actualResult).toEqual(expectedResult);
   });
