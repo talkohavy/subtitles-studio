@@ -1,5 +1,5 @@
 {
-  "name": "subtitles",
+  "name": "subtitles-studio",
   "private": true,
   "version": "1.0.0",
   "description": "Drop a video, get AI-generated subtitles from its audio, style them, and export the video with the subtitles burned in.",
