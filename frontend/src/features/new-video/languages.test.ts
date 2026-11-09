@@ -13,6 +13,12 @@ describe('getLanguageName', () => {
 
     expect(actualResult).toBe('Javanese');
   });
+
+  it('should name rare languages that some browsers have no name for', () => {
+    const actualResult = [getLanguageName('ba'), getLanguageName('bo')];
+
+    expect(actualResult).toEqual(['Bashkir', 'Tibetan']);
+  });
 });
 
 describe('getLanguageOptions', () => {

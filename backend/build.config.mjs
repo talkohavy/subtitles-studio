@@ -33,10 +33,11 @@ async function build() {
   console.log(`${COLORS.green}- Step 2:${COLORS.stop} build the output dir`);
 
   await esbuild.build({
-    // The transcription worker runs in its own process, so it gets its own bundle (see spawnTranscriptionWorker.ts).
+    // Each worker runs in its own process, so it gets its own bundle (see spawnTranscriptionWorker.ts).
     entryPoints: {
       index: 'src/start-server.ts',
       'transcription.worker': 'src/modules/transcription/logic/worker/transcription.worker.ts',
+      'translation.worker': 'src/modules/translation/logic/worker/translation.worker.ts',
     },
     bundle: true,
     outdir: outDirName,

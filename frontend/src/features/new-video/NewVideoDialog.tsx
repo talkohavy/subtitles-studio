@@ -37,7 +37,7 @@ export function NewVideoDialog() {
       open={isOpen}
       onOpenChange={(open) => dispatch(newVideoDialogToggled(open))}
       title='New Video'
-      description='Pick the spoken language (or let it be detected), then drop a video.'
+      description='Pick the spoken language (or let it be detected) and whether to translate, then drop a video.'
     >
       <div className='space-y-5'>
         <TranscriptionSettingsFields />

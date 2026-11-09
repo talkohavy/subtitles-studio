@@ -1,35 +1,11 @@
 import { toApiError } from './api-error';
+import { deleteInBackground, requestJson } from './requestJson';
 import type { TranscriptionJob, TranscriptionOptions } from './types';
 
 const API_PATHS = {
   transcriptions: '/api/transcriptions',
   transcriptionOptions: '/api/transcription-options',
 } as const;
-
-type RequestJsonProps = {
-  url: string;
-  method?: 'GET' | 'DELETE';
-  signal?: AbortSignal;
-};
-
-async function requestJson<T>(props: RequestJsonProps): Promise<T> {
-  const { url, method = 'GET', signal } = props;
-
-  let response: Response;
-
-  try {
-    response = await fetch(url, { method, signal, headers: { Accept: 'application/json' } });
-  } catch (error) {
-    signal?.throwIfAborted();
-    throw toApiError({ status: 0, body: String(error) });
-  }
-
-  const body = await response.text();
-
-  if (!response.ok) throw toApiError({ status: response.status, body });
-
-  return JSON.parse(body) as T;
-}
 
 export async function fetchTranscriptionOptions(signal?: AbortSignal): Promise<TranscriptionOptions> {
   const options = await requestJson<TranscriptionOptions>({ url: API_PATHS.transcriptionOptions, signal });
@@ -116,15 +92,6 @@ export async function fetchTranscription(props: FetchTranscriptionProps): Promis
   return job;
 }
 
-/**
- * Cancels a transcription. Best effort: `keepalive` lets it finish even if the page is closing.
- */
 export async function cancelTranscription(id: string): Promise<void> {
-  const url = `${API_PATHS.transcriptions}/${encodeURIComponent(id)}`;
-
-  try {
-    await fetch(url, { method: 'DELETE', keepalive: true });
-  } catch {
-    // The server drops abandoned transcriptions on its own.
-  }
+  await deleteInBackground(`${API_PATHS.transcriptions}/${encodeURIComponent(id)}`);
 }

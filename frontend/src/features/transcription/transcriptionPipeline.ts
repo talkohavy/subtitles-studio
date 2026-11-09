@@ -1,9 +1,6 @@
 import { toast } from 'sonner';
 import { getErrorMessage, isAbortError } from '@src/common/utils/getErrorMessage';
-import { sleep } from '@src/common/utils/sleep';
-import { ApiError } from '@src/lib/api/api-error';
 import { cancelTranscription, createTranscription, fetchTranscription } from '@src/lib/api/transcriptionApi';
-import { TranscriptionStatuses, type TranscriptionJob } from '@src/lib/api/types';
 import { computeWaveformPeaks } from '@src/lib/media/computeWaveformPeaks';
 import { MAX_VIDEO_FILE_BYTES } from '@src/lib/media/constants';
 import { extractAudio } from '@src/lib/media/extractAudio';
@@ -29,44 +26,17 @@ import {
 } from '../../store/slices/session.slice';
 import { settingsChanged } from '../../store/slices/settings.slice';
 import { cueSelected } from '../../store/slices/ui.slice';
+import { pollJob } from '../processing/pollJob';
+import { finishRun, startRun, stopActiveRun, type ProcessingRun } from '../processing/processingRun';
+import { translateTranscript } from '../translation/translationPipeline';
 import type { AppDispatch, AppThunk, RootState } from '../../store';
+import type { TranscriptionJob } from '@src/lib/api/types';
 import type { CaptionLengthValues } from '@src/lib/subtitles/constants';
 import type { Word } from '@src/lib/subtitles/types';
 
-const POLL_INTERVAL_MS = 750;
-const MAX_CONSECUTIVE_POLL_ERRORS = 5;
 const PROGRESS_DISPATCH_INTERVAL_MS = 100;
 const TRANSCRIPT_PREVIEW_WORDS = 30;
 const WAVEFORM_PEAKS_PER_SECOND = 100;
-
-type PipelineRun = {
-  controller: AbortController;
-  /**
-   * The server-side transcription, while it runs.
-   */
-  jobId: string | null;
-};
-
-let activeRun: PipelineRun | null = null;
-
-function startRun(): PipelineRun {
-  stopActiveRun();
-
-  const run: PipelineRun = { controller: new AbortController(), jobId: null };
-  activeRun = run;
-
-  return run;
-}
-
-function stopActiveRun() {
-  if (!activeRun) return;
-
-  activeRun.controller.abort(new DOMException('Canceled', 'AbortError'));
-
-  if (activeRun.jobId) void cancelTranscription(activeRun.jobId);
-
-  activeRun = null;
-}
 
 /**
  * Opens a video and transcribes it: reads the file, extracts its audio in the browser, uploads only the audio,
@@ -155,8 +125,8 @@ export function closeVideo(): AppThunk {
 }
 
 /**
- * Stops the transcription. When there are subtitles to go back to (a re-transcription), they are kept;
- * otherwise the video is closed.
+ * Stops the processing. When there are subtitles to go back to (when transcribing again, or translating), they are
+ * kept; otherwise the video is closed.
  */
 export function cancelProcessing(): AppThunk {
   return function cancelProcessingThunk(dispatch, getState) {
@@ -194,11 +164,14 @@ export function regroupCaptions(captionLength: CaptionLengthValues): AppThunk {
 }
 
 type RunTranscriptionProps = {
-  run: PipelineRun;
+  run: ProcessingRun;
   dispatch: AppDispatch;
   getState: () => RootState;
 };
 
+/**
+ * Transcribes the extracted audio into subtitles, then translates them when the settings ask for it.
+ */
 async function runTranscription(props: RunTranscriptionProps): Promise<void> {
   const { run, dispatch, getState } = props;
 
@@ -207,18 +180,18 @@ async function runTranscription(props: RunTranscriptionProps): Promise<void> {
 
   if (!wav) throw new MediaError('The audio is missing. Open the video again.');
 
-  const { language, modelId } = getState().settings;
+  const { language, modelId, translationLanguage } = getState().settings;
 
-  dispatch(transcriptionRequested({ language, modelId }));
+  dispatch(transcriptionRequested({ language, modelId, translationLanguage }));
   dispatch(phaseChanged(SessionPhases.Uploading));
 
   const onUploadProgress = createProgressReporter(dispatch);
   const createdJob = await createTranscription({ wav, language, modelId, onUploadProgress, signal });
-  run.jobId = createdJob.id;
+  run.cancelServerJob = () => void cancelTranscription(createdJob.id);
   dispatch(phaseChanged(SessionPhases.Transcribing));
 
   const { words, job } = await pollTranscription({ createdJob, run, dispatch, audioOffsetSec });
-  run.jobId = null;
+  run.cancelServerJob = null;
 
   const state = getState();
   const cues = buildCues({
@@ -227,8 +200,19 @@ async function runTranscription(props: RunTranscriptionProps): Promise<void> {
     mediaDurationSec: state.session.video?.durationSec,
   });
 
-  finishRun(run);
   dispatch(projectLoaded({ cues, language: job.language }));
+
+  if (cues.length > 0 && translationLanguage) {
+    await translateTranscript({
+      run,
+      dispatch,
+      getState,
+      sourceLanguage: job.language,
+      targetLanguage: translationLanguage,
+    });
+  }
+
+  finishRun(run);
   dispatch(sessionReady());
 
   if (cues.length === 0) toast.info('No speech was found in this video. You can add subtitles by hand.');
@@ -236,7 +220,7 @@ async function runTranscription(props: RunTranscriptionProps): Promise<void> {
 
 type PollTranscriptionProps = {
   createdJob: TranscriptionJob;
-  run: PipelineRun;
+  run: ProcessingRun;
   dispatch: AppDispatch;
   /**
    * Added to the transcript's times, which count from the start of the audio.
@@ -254,66 +238,23 @@ async function pollTranscription(
 
   const { signal } = run.controller;
   const words: Array<Word> = [];
-  let job = createdJob;
-  let consecutiveErrors = 0;
-  let isFinished = false;
 
-  while (!isFinished) {
-    job.words.forEach((word) => {
-      words.push({ text: word.text, start: word.start + audioOffsetSec, end: word.end + audioOffsetSec });
-    });
+  const job = await pollJob({
+    job: createdJob,
+    fetchJob: () => fetchTranscription({ id: createdJob.id, wordsFrom: words.length, signal }),
+    onUpdate: (updatedJob) => {
+      updatedJob.words.forEach((word) => {
+        words.push({ text: word.text, start: word.start + audioOffsetSec, end: word.end + audioOffsetSec });
+      });
 
-    const transcriptPreview = joinWords(words.slice(-TRANSCRIPT_PREVIEW_WORDS));
-    dispatch(transcriptionProgressed({ job: toTranscriptionProgress(job), transcriptPreview }));
-
-    if (job.status === TranscriptionStatuses.Failed) throw new Error(job.error ?? 'The transcription failed.');
-
-    if (job.status === TranscriptionStatuses.Canceled) throw new Error('The transcription was canceled.');
-
-    isFinished = job.status === TranscriptionStatuses.Completed;
-
-    if (!isFinished) {
-      await sleep({ ms: POLL_INTERVAL_MS, signal });
-
-      const update = await fetchJobUpdate({ job, wordsFrom: words.length, consecutiveErrors, signal });
-      job = update.job;
-      consecutiveErrors = update.consecutiveErrors;
-    }
-  }
+      const transcriptPreview = joinWords(words.slice(-TRANSCRIPT_PREVIEW_WORDS));
+      dispatch(transcriptionProgressed({ job: toTranscriptionProgress(updatedJob), transcriptPreview }));
+    },
+    jobLabel: 'transcription',
+    signal,
+  });
 
   return { words, job };
-}
-
-type FetchJobUpdateProps = {
-  job: TranscriptionJob;
-  wordsFrom: number;
-  consecutiveErrors: number;
-  signal: AbortSignal;
-};
-
-/**
- * Network hiccups are retried a few times; on failure, the last known state comes back without words.
- */
-async function fetchJobUpdate(
-  props: FetchJobUpdateProps,
-): Promise<{ job: TranscriptionJob; consecutiveErrors: number }> {
-  const { job, wordsFrom, consecutiveErrors, signal } = props;
-
-  try {
-    const updatedJob = await fetchTranscription({ id: job.id, wordsFrom, signal });
-
-    return { job: updatedJob, consecutiveErrors: 0 };
-  } catch (error) {
-    signal.throwIfAborted();
-
-    if (error instanceof ApiError && error.status === 404) {
-      throw new Error('The server lost track of this transcription (it may have restarted). Try again.');
-    }
-
-    if (consecutiveErrors + 1 >= MAX_CONSECUTIVE_POLL_ERRORS) throw error;
-
-    return { job: { ...job, words: [] }, consecutiveErrors: consecutiveErrors + 1 };
-  }
 }
 
 function toTranscriptionProgress(job: TranscriptionJob): TranscriptionProgress {
@@ -332,23 +273,16 @@ function toTranscriptionProgress(job: TranscriptionJob): TranscriptionProgress {
   };
 }
 
-function handleRunError(props: { run: PipelineRun; error: unknown; dispatch: AppDispatch }) {
+function handleRunError(props: { run: ProcessingRun; error: unknown; dispatch: AppDispatch }) {
   const { run, error, dispatch } = props;
 
   if (run.controller.signal.aborted || isAbortError(error)) return;
 
-  if (run.jobId) void cancelTranscription(run.jobId);
-
+  run.cancelServerJob?.();
   finishRun(run);
 
   const canRetry = mediaStore.getSnapshot().wav !== null;
   dispatch(sessionFailed({ error: getErrorMessage(error), canRetry }));
-}
-
-function finishRun(run: PipelineRun) {
-  run.jobId = null;
-
-  if (activeRun === run) activeRun = null;
 }
 
 /**

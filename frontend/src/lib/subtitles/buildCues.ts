@@ -1,4 +1,5 @@
 import { createId } from '@src/common/utils/createId';
+import { endsClause, endsSentence, getDisplayLength, isDanglingWord } from './breakRules';
 import { CAPTION_LENGTH_OPTIONS, type CaptionLengthValues } from './constants';
 import { joinWords } from './tokenizeText';
 import type { Cue, Word } from './types';
@@ -42,119 +43,6 @@ const DANGLING_WORD_COST = 2;
  * Charged for each sentence that ends inside a caption instead of at its end.
  */
 const JOINED_SENTENCE_COST = 1.5;
-
-const SENTENCE_END = /[.!?…。！？]["'”’)\]]*$/u;
-const CLAUSE_END = /[,;:،、，；：]["'”’)\]]*$/u;
-const WIDE_CHARACTER = /[\u1100-\u115F\u2E80-\uA4CF\uAC00-\uD7A3\uF900-\uFAFF\uFE30-\uFE4F\uFF00-\uFF60\uFFE0-\uFFE6]/u;
-const NON_WORD_CHARACTERS = /[^\p{L}\p{N}']/gu;
-
-/**
- * English and Hebrew words that lead into what follows them, so a caption reads badly when it ends on one. The two
- * languages can share a set, since their words never collide.
- */
-const DANGLING_WORDS: ReadonlySet<string> = new Set([
-  'a',
-  'an',
-  'the',
-  'this',
-  'that',
-  'these',
-  'those',
-  'my',
-  'your',
-  'his',
-  'her',
-  'its',
-  'our',
-  'their',
-  'every',
-  'each',
-  'some',
-  'any',
-  'no',
-  'of',
-  'to',
-  'in',
-  'on',
-  'at',
-  'by',
-  'for',
-  'with',
-  'from',
-  'into',
-  'onto',
-  'about',
-  'over',
-  'under',
-  'after',
-  'before',
-  'between',
-  'through',
-  'and',
-  'or',
-  'but',
-  'nor',
-  'so',
-  'if',
-  'because',
-  'than',
-  'as',
-  'when',
-  'while',
-  'where',
-  'who',
-  'which',
-  'then',
-  'very',
-  'not',
-  'will',
-  'would',
-  'can',
-  'could',
-  'should',
-  'must',
-  'i',
-  "i'm",
-  "it's",
-  "don't",
-  "can't",
-  "won't",
-  'של',
-  'את',
-  'על',
-  'עם',
-  'אל',
-  'בין',
-  'כמו',
-  'לפני',
-  'אחרי',
-  'בלי',
-  'עד',
-  'לגבי',
-  'בשביל',
-  'בגלל',
-  'למרות',
-  'כדי',
-  'כל',
-  'אם',
-  'כי',
-  'או',
-  'אבל',
-  'גם',
-  'רק',
-  'לא',
-  'אין',
-  'אשר',
-  'כאשר',
-  'וכל',
-  'ולא',
-  'וגם',
-  'ואם',
-  'ועל',
-  'ואת',
-  'ועם',
-  'ושל',
-]);
 
 /**
  * Groups transcribed words into captions. Pauses always split; within a phrase, captions break where it reads
@@ -236,7 +124,7 @@ function breakIntoCaptions(props: BreakIntoCaptionsProps): Array<Array<Word>> {
 
       tailLength += lengths[start]!;
 
-      if (start > 0 && SENTENCE_END.test(words[start - 1]!.text.trim())) joinedSentences += 1;
+      if (start > 0 && endsSentence(words[start - 1]!.text)) joinedSentences += 1;
     }
 
     bestCost[end] = cheapestCost;
@@ -282,29 +170,17 @@ type GetBreakCostProps = {
 function getBreakCost(props: GetBreakCostProps): number {
   const { lastWord, nextWord } = props;
 
-  const text = lastWord.text.trim();
-
-  if (SENTENCE_END.test(text)) return 0;
+  if (endsSentence(lastWord.text)) return 0;
 
   const pauseSec = Math.max(0, nextWord.start - lastWord.end);
   const pauseRelief = Math.min(1, pauseSec / PAUSE_SPLIT_SEC);
 
-  if (CLAUSE_END.test(text)) return CLAUSE_BREAK_COST * (1 - pauseRelief);
+  if (endsClause(lastWord.text)) return CLAUSE_BREAK_COST * (1 - pauseRelief);
 
-  const isDangling = DANGLING_WORDS.has(text.toLowerCase().replace(NON_WORD_CHARACTERS, ''));
+  const isDangling = isDanglingWord(lastWord.text);
   const cost = (MID_SENTENCE_BREAK_COST + (isDangling ? DANGLING_WORD_COST : 0)) * (1 - 0.8 * pauseRelief);
 
   return cost;
-}
-
-/**
- * Wide (CJK) characters count twice, since they take about twice the room of Latin letters.
- */
-function getDisplayLength(text: string): number {
-  const characters = Array.from(text);
-  const length = characters.reduce((sum, character) => sum + (WIDE_CHARACTER.test(character) ? 2 : 1), 0);
-
-  return length;
 }
 
 function toCue(group: ReadonlyArray<Word>): Cue {

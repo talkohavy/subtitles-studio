@@ -1,6 +1,9 @@
 import type { Word } from '@src/lib/subtitles/types';
 
-export const TranscriptionStatuses = {
+/**
+ * The statuses of server-side jobs: transcriptions and translations.
+ */
+export const JobStatuses = {
   Queued: 'queued',
   Processing: 'processing',
   Completed: 'completed',
@@ -8,7 +11,7 @@ export const TranscriptionStatuses = {
   Canceled: 'canceled',
 } as const;
 
-export type TranscriptionStatusValues = (typeof TranscriptionStatuses)[keyof typeof TranscriptionStatuses];
+export type JobStatusValues = (typeof JobStatuses)[keyof typeof JobStatuses];
 
 export const TranscriptionStages = {
   Waiting: 'waiting',
@@ -32,7 +35,7 @@ export type ModelDownloadProgress = {
  */
 export type TranscriptionJob = {
   id: string;
-  status: TranscriptionStatusValues;
+  status: JobStatusValues;
   stage: TranscriptionStageValues;
   modelId: string;
   requestedLanguage: string;
@@ -81,6 +84,58 @@ export type TranscriptionOptions = {
   models: Array<TranscriptionModel>;
   /**
    * Language codes, besides `auto`.
+   */
+  languages: Array<string>;
+};
+
+export const TranslationStages = {
+  Waiting: 'waiting',
+  LoadingModel: 'loading-model',
+  Translating: 'translating',
+  Done: 'done',
+} as const;
+
+export type TranslationStageValues = (typeof TranslationStages)[keyof typeof TranslationStages];
+
+/**
+ * Mirrors the backend's `TranslationJobDto`.
+ */
+export type TranslationJob = {
+  id: string;
+  status: JobStatusValues;
+  stage: TranslationStageValues;
+  sourceLanguage: string;
+  targetLanguage: string;
+  /**
+   * From 0 to 1.
+   */
+  progress: number;
+  modelDownload: ModelDownloadProgress | null;
+  error: string | null;
+  createdAt: number;
+  startedAt: number | null;
+  finishedAt: number | null;
+  /**
+   * Position in the queue (1 = next), or `null` once processing started.
+   */
+  queuePosition: number | null;
+  textsTotal: number;
+  translatedCount: number;
+  /**
+   * The translations from index `translationsFrom` onward, one per text sent.
+   */
+  translations: Array<string>;
+  translationsFrom: number;
+};
+
+export type TranslationOptions = {
+  model: {
+    name: string;
+    approximateSizeMb: number;
+    isDownloaded: boolean;
+  };
+  /**
+   * The language codes subtitles can be translated from and to.
    */
   languages: Array<string>;
 };

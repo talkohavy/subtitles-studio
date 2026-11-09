@@ -1,5 +1,5 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
-import type { TranscriptionJob } from '@src/lib/api/types';
+import type { TranscriptionJob, TranslationJob } from '@src/lib/api/types';
 import type { VideoInfo } from '@src/lib/media/probeVideo';
 
 export const SessionPhases = {
@@ -8,6 +8,7 @@ export const SessionPhases = {
   ExtractingAudio: 'extracting-audio',
   Uploading: 'uploading',
   Transcribing: 'transcribing',
+  Translating: 'translating',
   Ready: 'ready',
   Failed: 'failed',
 } as const;
@@ -29,6 +30,11 @@ export type TranscriptionProgress = Pick<
   | 'wordsTotal'
 >;
 
+export type TranslationProgress = Pick<
+  TranslationJob,
+  'id' | 'status' | 'stage' | 'progress' | 'queuePosition' | 'modelDownload' | 'textsTotal' | 'translatedCount'
+>;
+
 export type SessionState = {
   phase: SessionPhaseValues;
   fileName: string | null;
@@ -40,7 +46,7 @@ export type SessionState = {
   phaseProgress: number;
   transcription: TranscriptionProgress | null;
   /**
-   * The end of the transcript so far, shown while transcribing.
+   * The end of the transcript (or of its translation) so far, shown while processing.
    */
   transcriptPreview: string;
   error: string | null;
@@ -50,6 +56,15 @@ export type SessionState = {
   canRetry: boolean;
   requestedLanguage: string;
   requestedModelId: string | null;
+  /**
+   * The language the subtitles are translated into as part of the processing, if any.
+   */
+  translationLanguage: string | null;
+  /**
+   * The processing translates the existing subtitles, without transcribing.
+   */
+  isTranslationOnly: boolean;
+  translation: TranslationProgress | null;
 };
 
 const initialState: SessionState = {
@@ -64,6 +79,9 @@ const initialState: SessionState = {
   canRetry: false,
   requestedLanguage: 'auto',
   requestedModelId: null,
+  translationLanguage: null,
+  isTranslationOnly: false,
+  translation: null,
 };
 
 const sessionSlice = createSlice({
@@ -85,10 +103,24 @@ const sessionSlice = createSlice({
       state.video = action.payload;
     },
 
-    transcriptionRequested(state, action: PayloadAction<{ language: string; modelId: string | null }>) {
+    transcriptionRequested(
+      state,
+      action: PayloadAction<{ language: string; modelId: string | null; translationLanguage: string | null }>,
+    ) {
       state.requestedLanguage = action.payload.language;
       state.requestedModelId = action.payload.modelId;
+      state.translationLanguage = action.payload.translationLanguage;
+      state.isTranslationOnly = false;
       state.transcription = null;
+      state.translation = null;
+      state.transcriptPreview = '';
+      state.error = null;
+    },
+
+    translationRequested(state, action: PayloadAction<{ targetLanguage: string }>) {
+      state.translationLanguage = action.payload.targetLanguage;
+      state.isTranslationOnly = true;
+      state.translation = null;
       state.transcriptPreview = '';
       state.error = null;
     },
@@ -104,6 +136,11 @@ const sessionSlice = createSlice({
 
     transcriptionProgressed(state, action: PayloadAction<{ job: TranscriptionProgress; transcriptPreview: string }>) {
       state.transcription = action.payload.job;
+      state.transcriptPreview = action.payload.transcriptPreview;
+    },
+
+    translationProgressed(state, action: PayloadAction<{ job: TranslationProgress; transcriptPreview: string }>) {
+      state.translation = action.payload.job;
       state.transcriptPreview = action.payload.transcriptPreview;
     },
 
@@ -128,9 +165,11 @@ export const {
   sessionStarted,
   videoProbed,
   transcriptionRequested,
+  translationRequested,
   phaseChanged,
   phaseProgressed,
   transcriptionProgressed,
+  translationProgressed,
   sessionReady,
   sessionFailed,
   sessionCleared,

@@ -1,10 +1,17 @@
-import type { CorsConfig, LoggerServiceSettings, StaticFrontendConfig, TranscriptionConfig } from '../types';
+import type {
+  CorsConfig,
+  LoggerServiceSettings,
+  StaticFrontendConfig,
+  TranscriptionConfig,
+  TranslationConfig,
+} from '../types';
 
 export const ConfigKeys = {
   Port: 'port',
   Cors: 'cors',
   LogSettings: 'logSettings',
   Transcription: 'transcription',
+  Translation: 'translation',
   StaticFrontend: 'staticFrontend',
 } as const;
 
@@ -15,5 +22,6 @@ export type Config = {
   [ConfigKeys.Cors]: CorsConfig;
   [ConfigKeys.LogSettings]: LoggerServiceSettings;
   [ConfigKeys.Transcription]: TranscriptionConfig;
+  [ConfigKeys.Translation]: TranslationConfig;
   [ConfigKeys.StaticFrontend]: StaticFrontendConfig;
 };

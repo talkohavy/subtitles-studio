@@ -49,6 +49,24 @@ export type TranscriptionConfig = {
   maxQueuedJobs: number;
 };
 
+export type TranslationConfig = {
+  /**
+   * Absolute path. The translation model is downloaded here once, then loaded from disk.
+   */
+  modelsDir: string;
+  /**
+   * When false, only a model already present in `modelsDir` can be used.
+   */
+  allowRemoteModels: boolean;
+  /**
+   * How long a finished translation stays available for polling.
+   *
+   * In milliseconds.
+   */
+  jobTtlMs: number;
+  maxQueuedJobs: number;
+};
+
 export type StaticFrontendConfig = {
   /**
    * Absolute path to the built frontend. Served (with an SPA fallback) only when the directory exists.

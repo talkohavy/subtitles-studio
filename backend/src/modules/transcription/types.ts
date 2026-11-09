@@ -1,12 +1,12 @@
-import type { LogLevelValues } from '@src/lib/logger';
+import type { ModelDownloadProgress } from '@src/common/types';
+import type { WorkerCancelRequest, WorkerJob, WorkerLifecycleEvent, WorkerProcess } from '@src/lib/worker-job-queue';
 import type {
   TranscriptionStageValues,
-  TranscriptionStatusValues,
+  TranscriptionWorkerEventTypes,
+  TranscriptionWorkerRequestTypes,
   WhisperDtypeValues,
   WhisperModelIdValues,
   WhisperRuntimeDeviceValues,
-  WorkerEventTypes,
-  WorkerRequestTypes,
 } from './logic/constants';
 
 export type WhisperRuntime = {
@@ -45,14 +45,7 @@ export type TranscribedWord = {
   end: number;
 };
 
-export type ModelDownloadProgress = {
-  loadedBytes: number;
-  totalBytes: number;
-};
-
-export type TranscriptionJob = {
-  id: string;
-  status: TranscriptionStatusValues;
+export type TranscriptionJob = WorkerJob & {
   stage: TranscriptionStageValues;
   modelId: WhisperModelIdValues;
   /**
@@ -76,10 +69,6 @@ export type TranscriptionJob = {
   progress: number;
   modelDownload: ModelDownloadProgress | null;
   words: Array<TranscribedWord>;
-  error: string | null;
-  createdAt: number;
-  startedAt: number | null;
-  finishedAt: number | null;
 };
 
 export type TranscriptionJobDto = Omit<TranscriptionJob, 'audioPath' | 'words'> & {
@@ -126,35 +115,32 @@ export type TranscribeTask = {
   allowRemoteModels: boolean;
 };
 
-export type WorkerRequest =
-  | { type: typeof WorkerRequestTypes.Transcribe; task: TranscribeTask }
-  | { type: typeof WorkerRequestTypes.Cancel; jobId: string };
+export type TranscribeRequest = { type: typeof TranscriptionWorkerRequestTypes.Transcribe; task: TranscribeTask };
 
-export type WorkerEvent =
-  | { type: typeof WorkerEventTypes.Stage; jobId: string; stage: TranscriptionStageValues }
-  | { type: typeof WorkerEventTypes.ModelDownload; jobId: string; loadedBytes: number; totalBytes: number }
+export type TranscriptionWorkerRequest = TranscribeRequest | WorkerCancelRequest;
+
+export type TranscriptionProgressEvent =
+  | { type: typeof TranscriptionWorkerEventTypes.Stage; jobId: string; stage: TranscriptionStageValues }
+  | { type: typeof TranscriptionWorkerEventTypes.ModelDownload; jobId: string; loadedBytes: number; totalBytes: number }
   | {
-      type: typeof WorkerEventTypes.ModelLoaded;
+      type: typeof TranscriptionWorkerEventTypes.ModelLoaded;
       jobId: string;
       device: WhisperRuntimeDeviceValues;
       dtype: WhisperDtypeValues;
     }
-  | { type: typeof WorkerEventTypes.Language; jobId: string; language: string; probability: number | null }
-  | { type: typeof WorkerEventTypes.Words; jobId: string; words: Array<TranscribedWord>; progress: number }
-  | { type: typeof WorkerEventTypes.Completed; jobId: string }
-  | { type: typeof WorkerEventTypes.Canceled; jobId: string }
-  | { type: typeof WorkerEventTypes.Failed; jobId: string; message: string }
-  | { type: typeof WorkerEventTypes.Log; level: LogLevelValues; message: string };
+  | {
+      type: typeof TranscriptionWorkerEventTypes.Language;
+      jobId: string;
+      language: string;
+      probability: number | null;
+    }
+  | {
+      type: typeof TranscriptionWorkerEventTypes.Words;
+      jobId: string;
+      words: Array<TranscribedWord>;
+      progress: number;
+    };
 
-/**
- * The slice of a `ChildProcess` the jobs service depends on (lets tests use a fake worker).
- */
-export type WorkerProcess = {
-  send: (message: WorkerRequest) => boolean;
-  kill: (signal?: NodeJS.Signals) => boolean;
-  on(event: 'message', listener: (message: WorkerEvent) => void): unknown;
-  on(event: 'exit', listener: (code: number | null, signal: NodeJS.Signals | null) => void): unknown;
-  on(event: 'error', listener: (error: Error) => void): unknown;
-  removeAllListeners: () => unknown;
-  readonly connected: boolean;
-};
+export type TranscriptionWorkerEvent = TranscriptionProgressEvent | WorkerLifecycleEvent;
+
+export type TranscriptionWorkerProcess = WorkerProcess<TranscriptionWorkerRequest, TranscriptionWorkerEvent>;

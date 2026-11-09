@@ -10,6 +10,7 @@ import { registerUrlEncodedMiddleware } from './middlewares/urlEncoded.middlewar
 import { HealthCheckModule } from './modules/health-check';
 import { StaticFrontendModule } from './modules/static-frontend';
 import { TranscriptionModule } from './modules/transcription';
+import { TranslationModule } from './modules/translation';
 import { callContextPlugin } from './plugins/call-context.plugin';
 import { configServicePlugin } from './plugins/config-service';
 import { httpServerPlugin } from './plugins/http-server.plugin';
@@ -32,6 +33,7 @@ export async function buildApp(app: Application) {
   await appModule.registerModules([
     HealthCheckModule,
     TranscriptionModule,
+    TranslationModule,
     // - Must come last: its catch-all route serves the single-page app
     StaticFrontendModule,
   ]);

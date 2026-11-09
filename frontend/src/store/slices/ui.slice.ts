@@ -4,6 +4,7 @@ export const PanelIds = {
   Subtitles: 'subtitles',
   Styles: 'styles',
   Enhance: 'enhance',
+  Translate: 'translate',
   Animate: 'animate',
   Font: 'font',
   Layout: 'layout',

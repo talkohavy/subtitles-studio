@@ -15,6 +15,10 @@ export type SettingsState = {
    * `null` uses the server's default model.
    */
   modelId: string | null;
+  /**
+   * The subtitles of new videos are translated into this language; `null` keeps them in the spoken one.
+   */
+  translationLanguage: string | null;
   captionLength: CaptionLengthValues;
   exportQuality: ExportQualityValues;
 };
@@ -22,6 +26,7 @@ export type SettingsState = {
 export const initialSettingsState: SettingsState = {
   language: AUTO_DETECT_LANGUAGE,
   modelId: null,
+  translationLanguage: null,
   captionLength: CaptionLengths.Line,
   exportQuality: ExportQualities.High,
 };

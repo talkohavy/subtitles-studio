@@ -5,11 +5,13 @@ import type { LoggerService } from '@src/core/services/logger';
 import type { HealthCheckModule } from '@src/modules/health-check';
 import type { StaticFrontendModule } from '@src/modules/static-frontend';
 import type { TranscriptionModule } from '@src/modules/transcription';
+import type { TranslationModule } from '@src/modules/translation';
 
 export interface OptimizedApp {
   modules: {
     HealthCheckModule: HealthCheckModule;
     TranscriptionModule: TranscriptionModule;
+    TranslationModule: TranslationModule;
     StaticFrontendModule: StaticFrontendModule;
   };
   configService: ConfigService;

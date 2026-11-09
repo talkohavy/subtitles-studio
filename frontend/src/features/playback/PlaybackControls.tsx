@@ -18,7 +18,7 @@ export function PlaybackControls(props: { zoom: ZoomState }) {
   const hasVideo = usePlayerState((state) => state.duration > 0);
 
   return (
-    <div className='grid h-12 grid-cols-[1fr_auto_1fr] items-center gap-3 px-3'>
+    <div className='@container grid h-12 grid-cols-[1fr_auto_1fr] items-center gap-3 px-3'>
       <div className='flex items-center gap-1'>
         <VolumeControl disabled={!hasVideo} />
       </div>

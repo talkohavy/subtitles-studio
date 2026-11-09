@@ -1,10 +1,12 @@
 import type { SelectOption } from '../../components/ui/SelectField';
 
 /**
- * Whisper uses a few codes that aren't standard.
+ * Whisper uses a few codes that aren't standard, and some browsers have no English name for a few rare languages.
  */
 const LANGUAGE_NAME_OVERRIDES: Readonly<Record<string, string>> = {
   jw: 'Javanese',
+  ba: 'Bashkir',
+  bo: 'Tibetan',
 };
 
 let displayNames: Intl.DisplayNames | null = null;

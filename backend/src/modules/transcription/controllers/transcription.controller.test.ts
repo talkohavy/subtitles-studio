@@ -4,20 +4,23 @@ import path from 'path';
 import express, { type Application } from 'express';
 import request from 'supertest';
 import { API_PATHS, StatusCodes } from '@src/common/constants';
+import { createLoggerMock, FakeWorker } from '@src/lib/worker-job-queue/test-utils/fake-worker';
 import { errorHandler } from '../../../middlewares/errorHandler.middleware';
-import { createLoggerMock, FakeWorker } from '../logic/test-utils/fake-worker';
 import { createWavBuffer } from '../logic/utils/audio/test-utils/createWavBuffer';
 import { TranscriptionJobsService } from '../services/transcription-jobs.service';
 import { TranscriptionService } from '../services/transcription.service';
 import { TranscriptionController } from './transcription.controller';
 import type { TranscriptionConfig } from '@src/plugins/config-service';
+import type { TranscriptionWorkerEvent, TranscriptionWorkerRequest } from '../types';
+
+type TranscriptionFakeWorker = FakeWorker<TranscriptionWorkerRequest, TranscriptionWorkerEvent>;
 
 const ONE_SECOND_WAV = createWavBuffer({ channels: [new Array(16_000).fill(0)], sampleRate: 16_000 });
 
 describe('TranscriptionController', () => {
   let app: Application;
   let tempDir: string;
-  let workers: Array<FakeWorker>;
+  let workers: Array<TranscriptionFakeWorker>;
   let jobsService: TranscriptionJobsService;
 
   beforeEach(async () => {
@@ -41,7 +44,7 @@ describe('TranscriptionController', () => {
       config,
       logger: app.logger,
       spawnWorker: () => {
-        const worker = new FakeWorker();
+        const worker: TranscriptionFakeWorker = new FakeWorker();
         workers.push(worker);
 
         return worker;

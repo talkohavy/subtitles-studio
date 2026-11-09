@@ -150,6 +150,14 @@ const projectSlice = createSlice({
       prepare: prepareWithHistory<{ cues: Array<Cue> }>(),
     },
 
+    cuesTranslated: {
+      reducer(state, action: HistoryAction<{ cues: Array<Cue>; language: string }>) {
+        state.cues = action.payload.cues;
+        state.language = action.payload.language;
+      },
+      prepare: prepareWithHistory<{ cues: Array<Cue>; language: string }>(),
+    },
+
     styleChanged: {
       reducer(state, action: HistoryAction<Partial<SubtitleStyle>>) {
         Object.assign(state.style, action.payload);
@@ -197,6 +205,7 @@ export const {
   cueAddedAtTime,
   cueDeleted,
   cuesReplaced,
+  cuesTranslated,
   styleChanged,
   presetApplied,
   canvasChanged,

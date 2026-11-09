@@ -102,24 +102,6 @@ export const WHISPER_LANGUAGE_CODES = [
   'ha', 'ba', 'jw', 'su', 'yue',
 ] as const;
 
-export const TranscriptionStatus = {
-  Queued: 'queued',
-  Processing: 'processing',
-  Completed: 'completed',
-  Failed: 'failed',
-  Canceled: 'canceled',
-} as const;
-
-type TypeOfTranscriptionStatus = typeof TranscriptionStatus;
-export type TranscriptionStatusKeys = keyof TypeOfTranscriptionStatus;
-export type TranscriptionStatusValues = TypeOfTranscriptionStatus[TranscriptionStatusKeys];
-
-export const FINISHED_STATUSES: ReadonlyArray<TranscriptionStatusValues> = [
-  TranscriptionStatus.Completed,
-  TranscriptionStatus.Failed,
-  TranscriptionStatus.Canceled,
-];
-
 export const TranscriptionStage = {
   Waiting: 'waiting',
   LoadingModel: 'loading-model',
@@ -132,21 +114,22 @@ type TypeOfTranscriptionStage = typeof TranscriptionStage;
 export type TranscriptionStageKeys = keyof TypeOfTranscriptionStage;
 export type TranscriptionStageValues = TypeOfTranscriptionStage[TranscriptionStageKeys];
 
-export const WorkerRequestTypes = {
+/**
+ * Besides the requests every worker understands (see `WorkerJobRequestTypes`).
+ */
+export const TranscriptionWorkerRequestTypes = {
   Transcribe: 'transcribe',
-  Cancel: 'cancel',
 } as const;
 
-export const WorkerEventTypes = {
+/**
+ * Progress events, besides the events every worker sends (see `WorkerJobEventTypes`).
+ */
+export const TranscriptionWorkerEventTypes = {
   Stage: 'stage',
   ModelDownload: 'model-download',
   ModelLoaded: 'model-loaded',
   Language: 'language',
   Words: 'words',
-  Completed: 'completed',
-  Canceled: 'canceled',
-  Failed: 'failed',
-  Log: 'log',
 } as const;
 
 export const WHISPER_SAMPLE_RATE = 16_000;
@@ -158,22 +141,3 @@ export const ACCEPTED_AUDIO_CONTENT_TYPES = [
   'audio/vnd.wave',
   'application/octet-stream',
 ];
-
-/**
- * How long a canceled job may keep the worker busy before the worker is killed.
- *
- * In milliseconds.
- */
-export const CANCEL_GRACE_PERIOD_MS = 15_000;
-
-/**
- * An idle worker is stopped to release the model's memory (often more than 1GB). It restarts on the next job.
- *
- * In milliseconds.
- */
-export const WORKER_IDLE_TIMEOUT_MS = 10 * 60 * 1000;
-
-/**
- * In milliseconds.
- */
-export const EXPIRED_JOBS_SWEEP_INTERVAL_MS = 60 * 1000;

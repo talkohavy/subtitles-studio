@@ -9,6 +9,8 @@ export function configuration(): Config {
   const env = validateEnvVariables();
 
   const storageDir = path.resolve(process.cwd(), env.STORAGE_DIR);
+  const modelsDir = path.join(storageDir, 'models');
+  const jobTtlMs = env.JOB_TTL_MINUTES * 60 * 1000;
 
   return {
     port: env.PORT,
@@ -22,13 +24,19 @@ export function configuration(): Config {
       usePrettyPrint: env.USE_PRETTY_PRINT,
     },
     transcription: {
-      modelsDir: path.join(storageDir, 'models'),
+      modelsDir,
       uploadsDir: path.join(storageDir, 'uploads'),
       maxUploadBytes: env.MAX_UPLOAD_MB * BYTES_IN_MB,
       defaultModelId: env.DEFAULT_WHISPER_MODEL,
       device: env.WHISPER_DEVICE,
       allowRemoteModels: env.ALLOW_REMOTE_MODELS,
-      jobTtlMs: env.JOB_TTL_MINUTES * 60 * 1000,
+      jobTtlMs,
+      maxQueuedJobs: MAX_QUEUED_JOBS,
+    },
+    translation: {
+      modelsDir,
+      allowRemoteModels: env.ALLOW_REMOTE_MODELS,
+      jobTtlMs,
       maxQueuedJobs: MAX_QUEUED_JOBS,
     },
     staticFrontend: {

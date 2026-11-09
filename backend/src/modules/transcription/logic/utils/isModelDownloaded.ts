@@ -1,5 +1,5 @@
-import { access } from 'fs/promises';
 import path from 'path';
+import { doesFileExist } from '@src/common/utils/doesFileExist';
 import { DTYPE_TO_FILE_SUFFIX } from '../constants';
 import type { WhisperRuntime } from '../../types';
 
@@ -27,14 +27,4 @@ export async function isModelDownloaded(props: IsModelDownloadedProps): Promise<
   const fileChecks = await Promise.all(requiredFiles.map((file) => doesFileExist(path.join(modelsDir, repo, file))));
 
   return fileChecks.every(Boolean);
-}
-
-async function doesFileExist(filePath: string): Promise<boolean> {
-  try {
-    await access(filePath);
-
-    return true;
-  } catch {
-    return false;
-  }
 }

@@ -20,6 +20,7 @@ const TIPS: ReadonlyArray<string> = [
   'Double-click an empty spot on the timeline to add a subtitle there.',
   'Hold Ctrl (or ⌘) and scroll over the timeline to zoom.',
   'Changing a subtitle’s text keeps its timing, word by word where possible.',
+  'Translate the subtitles into another language from the Translate panel; undo brings back the original.',
 ];
 
 export function HelpPanel() {
@@ -56,7 +57,8 @@ export function HelpPanel() {
           <p className='text-sm leading-relaxed text-zinc-400'>
             Your video never leaves your browser: the audio is extracted on your computer, and only that audio is sent
             to the transcription server, which runs an open-source Whisper model and deletes the audio once it’s done.
-            Exports are made in your browser, too.
+            Translations run on the same server with Meta’s open-source NLLB model, and only the subtitles’ text is
+            sent. Exports are made in your browser, too.
           </p>
         </PanelSection>
       </PanelBody>

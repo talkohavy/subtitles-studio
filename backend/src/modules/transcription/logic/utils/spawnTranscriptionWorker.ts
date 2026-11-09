@@ -1,12 +1,12 @@
 import { fork } from 'child_process';
 import path from 'path';
-import type { WorkerProcess } from '../../types';
+import type { TranscriptionWorkerProcess } from '../../types';
 
 /**
  * In development the server runs from TypeScript sources through tsx, so the worker does too. The production
  * build bundles the worker into its own file next to the server bundle (see `build.config.mjs`).
  */
-export function spawnTranscriptionWorker(): WorkerProcess {
+export function spawnTranscriptionWorker(): TranscriptionWorkerProcess {
   const isTypeScriptRuntime = __filename.endsWith('.ts');
 
   const workerPath = isTypeScriptRuntime

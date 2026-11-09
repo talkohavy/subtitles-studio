@@ -1,14 +1,17 @@
 import { EventEmitter } from 'events';
-import type { WorkerEvent, WorkerProcess, WorkerRequest } from '../../types';
+import type { WorkerProcess } from '../types';
 
 /**
- * Test double for the transcription worker process: records what it's sent and lets tests emit its events.
+ * Test double for a worker process: records what it's sent and lets tests emit its events.
  */
-export class FakeWorker extends EventEmitter implements WorkerProcess {
+export class FakeWorker<TRequest = unknown, TEvent = unknown>
+  extends EventEmitter
+  implements WorkerProcess<TRequest, TEvent>
+{
   connected = true;
-  readonly sentMessages: Array<WorkerRequest> = [];
+  readonly sentMessages: Array<TRequest> = [];
 
-  send = jest.fn((message: WorkerRequest) => {
+  send = jest.fn((message: TRequest) => {
     this.sentMessages.push(message);
 
     return true;
@@ -20,7 +23,7 @@ export class FakeWorker extends EventEmitter implements WorkerProcess {
     return true;
   });
 
-  emitEvent(event: WorkerEvent) {
+  emitEvent(event: TEvent) {
     this.emit('message', event);
   }
 

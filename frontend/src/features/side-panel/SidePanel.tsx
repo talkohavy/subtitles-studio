@@ -8,6 +8,7 @@ import { FontPanel } from '../panels/FontPanel';
 import { HelpPanel } from '../panels/HelpPanel';
 import { LayoutPanel } from '../panels/LayoutPanel';
 import { StylesPanel } from '../panels/StylesPanel';
+import { TranslatePanel } from '../panels/TranslatePanel';
 import { SubtitlesPanel } from '../subtitles/SubtitlesPanel';
 
 export function SidePanel() {
@@ -18,6 +19,7 @@ export function SidePanel() {
       {activePanel === PanelIds.Subtitles && <SubtitlesPanel />}
       {activePanel === PanelIds.Styles && <StylesPanel />}
       {activePanel === PanelIds.Enhance && <EnhancePanel />}
+      {activePanel === PanelIds.Translate && <TranslatePanel />}
       {activePanel === PanelIds.Animate && <AnimatePanel />}
       {activePanel === PanelIds.Font && <FontPanel />}
       {activePanel === PanelIds.Layout && <LayoutPanel />}

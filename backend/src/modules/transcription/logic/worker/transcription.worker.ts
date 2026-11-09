@@ -1,19 +1,21 @@
 import { readFile } from 'fs/promises';
+import { getErrorMessage } from '@src/common/utils/getErrorMessage';
 import { LogLevel } from '@src/lib/logger';
+import { WorkerJobEventTypes, WorkerJobRequestTypes } from '@src/lib/worker-job-queue';
 import {
   AUTO_DETECT_LANGUAGE,
   TranscriptionStage,
+  TranscriptionWorkerEventTypes,
+  TranscriptionWorkerRequestTypes,
   WHISPER_SAMPLE_RATE,
-  WorkerEventTypes,
-  WorkerRequestTypes,
 } from '../constants';
 import { decodeWav } from '../utils/audio/decodeWav';
 import { downmixToMono } from '../utils/audio/downmixToMono';
 import { resampleAudio } from '../utils/audio/resampleAudio';
 import { normalizeWords } from '../utils/normalizeWords';
 import { splitIntoSpeechWindows, type AudioWindow } from '../utils/splitIntoSpeechWindows';
-import { getErrorMessage, WhisperEngine } from './whisper-engine';
-import type { TranscribeTask, WorkerEvent, WorkerRequest } from '../../types';
+import { WhisperEngine } from './whisper-engine';
+import type { TranscribeTask, TranscriptionWorkerEvent, TranscriptionWorkerRequest } from '../../types';
 
 /**
  * Runs in a child process (see `TranscriptionJobsService`): inference blocks the event loop for seconds at a time,
@@ -28,13 +30,13 @@ const canceledJobIds = new Set<string>();
 process.on('message', handleRequest);
 process.on('disconnect', () => process.exit(0));
 
-function handleRequest(request: WorkerRequest) {
-  if (request.type === WorkerRequestTypes.Cancel) return void canceledJobIds.add(request.jobId);
+function handleRequest(request: TranscriptionWorkerRequest) {
+  if (request.type === WorkerJobRequestTypes.Cancel) return void canceledJobIds.add(request.jobId);
 
-  if (request.type === WorkerRequestTypes.Transcribe) void runTask(request.task);
+  if (request.type === TranscriptionWorkerRequestTypes.Transcribe) void runTask(request.task);
 }
 
-function send(event: WorkerEvent) {
+function send(event: TranscriptionWorkerEvent) {
   process.send?.(event);
 }
 
@@ -53,16 +55,16 @@ async function runTask(task: TranscribeTask) {
 
     const language = await resolveLanguage({ task, samples, windows });
 
-    send({ type: WorkerEventTypes.Stage, jobId, stage: TranscriptionStage.Transcribing });
+    send({ type: TranscriptionWorkerEventTypes.Stage, jobId, stage: TranscriptionStage.Transcribing });
 
     await transcribeWindows({ jobId, samples, windows, language });
 
-    send({ type: WorkerEventTypes.Completed, jobId });
+    send({ type: WorkerJobEventTypes.Completed, jobId });
   } catch (error) {
     if (error instanceof JobCanceledError) {
-      send({ type: WorkerEventTypes.Canceled, jobId });
+      send({ type: WorkerJobEventTypes.Canceled, jobId });
     } else {
-      send({ type: WorkerEventTypes.Failed, jobId, message: getErrorMessage(error) });
+      send({ type: WorkerJobEventTypes.Failed, jobId, message: getErrorMessage(error) });
     }
   } finally {
     canceledJobIds.delete(jobId);
@@ -88,23 +90,23 @@ async function loadAudio(audioPath: string): Promise<Float32Array> {
 async function loadModel(task: TranscribeTask) {
   const { jobId, repo, runtimes, modelsDir, allowRemoteModels } = task;
 
-  send({ type: WorkerEventTypes.Stage, jobId, stage: TranscriptionStage.LoadingModel });
+  send({ type: TranscriptionWorkerEventTypes.Stage, jobId, stage: TranscriptionStage.LoadingModel });
 
   const runtime = await engine.load({
     repo,
     runtimes,
     modelsDir,
     allowRemoteModels,
-    onDownloadProgress: (progress) => send({ type: WorkerEventTypes.ModelDownload, jobId, ...progress }),
+    onDownloadProgress: (progress) => send({ type: TranscriptionWorkerEventTypes.ModelDownload, jobId, ...progress }),
     onRuntimeFailed: ({ runtime: failedRuntime, error }) =>
       send({
-        type: WorkerEventTypes.Log,
+        type: WorkerJobEventTypes.Log,
         level: LogLevel.Warn,
         message: `Could not run ${repo} on ${failedRuntime.device} (${failedRuntime.dtype}), trying the next option: ${getErrorMessage(error)}`,
       }),
   });
 
-  send({ type: WorkerEventTypes.ModelLoaded, jobId, device: runtime.device, dtype: runtime.dtype });
+  send({ type: TranscriptionWorkerEventTypes.ModelLoaded, jobId, device: runtime.device, dtype: runtime.dtype });
 }
 
 type ResolveLanguageProps = {
@@ -122,23 +124,23 @@ async function resolveLanguage(props: ResolveLanguageProps): Promise<string> {
       throw new Error(`This model can't transcribe the "${task.language}" language. Try another model`);
     }
 
-    send({ type: WorkerEventTypes.Language, jobId, language: task.language, probability: null });
+    send({ type: TranscriptionWorkerEventTypes.Language, jobId, language: task.language, probability: null });
 
     return task.language;
   }
 
   if (windows.length === 0) {
-    send({ type: WorkerEventTypes.Language, jobId, language: 'en', probability: null });
+    send({ type: TranscriptionWorkerEventTypes.Language, jobId, language: 'en', probability: null });
 
     return 'en';
   }
 
-  send({ type: WorkerEventTypes.Stage, jobId, stage: TranscriptionStage.DetectingLanguage });
+  send({ type: TranscriptionWorkerEventTypes.Stage, jobId, stage: TranscriptionStage.DetectingLanguage });
 
   const windowSamples = windows.map((window) => samples.subarray(window.start, window.end));
   const { language, probability } = await engine.detectLanguage({ windows: windowSamples });
 
-  send({ type: WorkerEventTypes.Language, jobId, language, probability });
+  send({ type: TranscriptionWorkerEventTypes.Language, jobId, language, probability });
 
   return language;
 }
@@ -157,7 +159,7 @@ async function transcribeWindows(props: TranscribeWindowsProps) {
   let processedSamples = 0;
 
   if (windows.length === 0) {
-    send({ type: WorkerEventTypes.Words, jobId, words: [], progress: 1 });
+    send({ type: TranscriptionWorkerEventTypes.Words, jobId, words: [], progress: 1 });
     return;
   }
 
@@ -177,7 +179,7 @@ async function transcribeWindows(props: TranscribeWindowsProps) {
 
     processedSamples += window.end - window.start;
 
-    send({ type: WorkerEventTypes.Words, jobId, words, progress: processedSamples / totalSamples });
+    send({ type: TranscriptionWorkerEventTypes.Words, jobId, words, progress: processedSamples / totalSamples });
   }
 }
 

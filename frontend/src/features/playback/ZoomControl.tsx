@@ -37,7 +37,7 @@ export function ZoomControl(props: { zoom: ZoomState; disabled?: boolean }) {
   }
 
   return (
-    <div className='flex items-center gap-1'>
+    <div className='hidden items-center gap-1 @xl:flex'>
       <IconButton
         label='Zoom out'
         icon={<ZoomOut className='size-4' />}
@@ -52,7 +52,7 @@ export function ZoomControl(props: { zoom: ZoomState; disabled?: boolean }) {
         step={1}
         onValueChange={handleSliderChange}
         disabled={!canZoom}
-        className='w-24'
+        className='hidden w-24 @2xl:flex'
       />
       <IconButton
         label='Zoom in'

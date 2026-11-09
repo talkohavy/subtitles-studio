@@ -36,7 +36,7 @@ export function VolumeControl(props: { disabled?: boolean }) {
         step={0.05}
         onValueChange={handleVolumeChange}
         disabled={disabled}
-        className='w-20'
+        className='hidden w-20 @md:flex'
       />
     </div>
   );

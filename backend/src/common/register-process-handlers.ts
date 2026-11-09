@@ -54,10 +54,15 @@ async function runCleanupSteps(props: RunCleanupStepsProps) {
   const { app, reasonLabel } = props;
   const { logger, modules } = app;
 
-  // Stops the transcription worker process, which would otherwise outlive the server.
+  // Stops the worker processes, which would otherwise outlive the server.
   await runCleanupStep({
     cleanup: () => modules.TranscriptionModule?.cleanup(),
     failureMessage: `Transcription cleanup failed during ${reasonLabel}`,
+    logger,
+  });
+  await runCleanupStep({
+    cleanup: () => modules.TranslationModule?.cleanup(),
+    failureMessage: `Translation cleanup failed during ${reasonLabel}`,
     logger,
   });
 }

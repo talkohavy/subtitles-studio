@@ -4,10 +4,12 @@ import {
   Tensor,
   type AutomaticSpeechRecognitionOutput,
   type AutomaticSpeechRecognitionPipeline,
-  type ProgressInfo,
 } from '@huggingface/transformers';
+import { createDownloadProgressHandler } from '@src/common/utils/createDownloadProgressHandler';
+import { getErrorMessage } from '@src/common/utils/getErrorMessage';
 import { WHISPER_SAMPLE_RATE, WhisperDevice } from '../constants';
-import type { ModelDownloadProgress, WhisperRuntime } from '../../types';
+import type { ModelDownloadProgress } from '@src/common/types';
+import type { WhisperRuntime } from '../../types';
 import type { RawWordChunk } from '../utils/normalizeWords';
 
 type LoadProps = {
@@ -51,7 +53,6 @@ type WhisperGenerationConfig = {
 };
 
 const BYTES_IN_MB = 1024 * 1024;
-const DOWNLOAD_PROGRESS_INTERVAL_MS = 250;
 const MAX_LANGUAGE_DETECTION_WINDOWS = 3;
 /**
  * Detection stops early once the windows seen so far agree with at least this probability.
@@ -181,26 +182,10 @@ export class WhisperEngine {
   }): Promise<AutomaticSpeechRecognitionPipeline> {
     const { repo, runtime, onDownloadProgress } = props;
 
-    const approximateTotalBytes = runtime.approximateSizeMb * BYTES_IN_MB;
-    let isDownloading = false;
-    let lastReportTime = 0;
-
-    function handleProgress(progressInfo: ProgressInfo) {
-      if (progressInfo.status === 'download') isDownloading = true;
-
-      if (progressInfo.status !== 'progress_total' || !isDownloading) return;
-
-      const now = Date.now();
-      const isDone = progressInfo.loaded >= progressInfo.total;
-
-      if (!isDone && now - lastReportTime < DOWNLOAD_PROGRESS_INTERVAL_MS) return;
-
-      lastReportTime = now;
-      onDownloadProgress({
-        loadedBytes: progressInfo.loaded,
-        totalBytes: Math.max(progressInfo.total, approximateTotalBytes),
-      });
-    }
+    const handleProgress = createDownloadProgressHandler({
+      approximateTotalBytes: runtime.approximateSizeMb * BYTES_IN_MB,
+      onDownloadProgress,
+    });
 
     const transcriber = await pipeline('automatic-speech-recognition', repo, {
       device: runtime.device,
@@ -284,10 +269,4 @@ function getIndexOfMax(values: Float64Array): number {
   });
 
   return indexOfMax;
-}
-
-export function getErrorMessage(error: unknown): string {
-  if (error instanceof Error) return error.message;
-
-  return String(error);
 }

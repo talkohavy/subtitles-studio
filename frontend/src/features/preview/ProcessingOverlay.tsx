@@ -25,7 +25,9 @@ export function ProcessingOverlay() {
   return (
     <div className='absolute inset-0 z-10 flex animate-fade-in items-center justify-center bg-zinc-950/75 p-4 backdrop-blur-sm'>
       <div className='w-full max-w-md animate-scale-in rounded-2xl border border-zinc-800 bg-zinc-900/95 p-6 shadow-2xl'>
-        <h2 className='text-base font-semibold text-zinc-50'>Creating your subtitles</h2>
+        <h2 className='text-base font-semibold text-zinc-50'>
+          {session.isTranslationOnly ? 'Translating your subtitles' : 'Creating your subtitles'}
+        </h2>
         {session.fileName && <p className='mt-0.5 truncate text-sm text-zinc-500'>{session.fileName}</p>}
         <ol className='mt-5 space-y-3.5'>
           {steps.map((step) => (

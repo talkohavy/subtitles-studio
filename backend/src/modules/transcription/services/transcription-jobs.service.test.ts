@@ -1,10 +1,13 @@
 import { access, mkdtemp, rm, writeFile } from 'fs/promises';
 import os from 'os';
 import path from 'path';
+import { createLoggerMock, FakeWorker } from '@src/lib/worker-job-queue/test-utils/fake-worker';
 import { WHISPER_MODELS } from '../logic/constants';
-import { createLoggerMock, FakeWorker } from '../logic/test-utils/fake-worker';
 import { TranscriptionJobsService } from './transcription-jobs.service';
 import type { TranscriptionConfig } from '@src/plugins/config-service';
+import type { TranscriptionWorkerEvent, TranscriptionWorkerRequest } from '../types';
+
+type TranscriptionFakeWorker = FakeWorker<TranscriptionWorkerRequest, TranscriptionWorkerEvent>;
 
 const CONFIG: TranscriptionConfig = {
   modelsDir: '/models',
@@ -43,7 +46,7 @@ async function waitUntil(condition: () => Promise<boolean>) {
 
 describe('TranscriptionJobsService', () => {
   let service: TranscriptionJobsService;
-  let workers: Array<FakeWorker>;
+  let workers: Array<TranscriptionFakeWorker>;
 
   function createJob(props: { id: string; audioPath?: string }) {
     const { id, audioPath = `/uploads/${id}.wav` } = props;
@@ -57,7 +60,7 @@ describe('TranscriptionJobsService', () => {
       config: CONFIG,
       logger: createLoggerMock(),
       spawnWorker: () => {
-        const worker = new FakeWorker();
+        const worker: TranscriptionFakeWorker = new FakeWorker();
         workers.push(worker);
 
         return worker;

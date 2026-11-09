@@ -4,6 +4,10 @@ export const API_PATHS = {
   transcriptions: '/api/transcriptions',
   transcriptionById: '/api/transcriptions/:transcriptionId',
   transcriptionOptions: '/api/transcription-options',
+  // translation
+  translations: '/api/translations',
+  translationById: '/api/translations/:translationId',
+  translationOptions: '/api/translation-options',
 } satisfies Record<string, `/${string}`>;
 
 export const API_PATH_PREFIX = '/api/';
