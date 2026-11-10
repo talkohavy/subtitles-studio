@@ -1,4 +1,4 @@
-import { toApiError } from './api-error';
+import { parseApiResponse, toApiError } from './api-error';
 
 type RequestJsonProps = {
   url: string;
@@ -31,7 +31,9 @@ export async function requestJson<T>(props: RequestJsonProps): Promise<T> {
 
   if (!response.ok) throw toApiError({ status: response.status, body: responseBody });
 
-  return JSON.parse(responseBody) as T;
+  const parsedBody = parseApiResponse<T>({ status: response.status, body: responseBody });
+
+  return parsedBody;
 }
 
 /**

@@ -1,4 +1,4 @@
-import { toApiError } from './api-error';
+import { parseApiResponse, toApiError } from './api-error';
 import { deleteInBackground, requestJson } from './requestJson';
 import type { TranscriptionJob, TranscriptionOptions } from './types';
 
@@ -55,10 +55,17 @@ export async function createTranscription(props: CreateTranscriptionProps): Prom
     request.onload = () => {
       signal.removeEventListener('abort', abort);
 
-      if (request.status >= 200 && request.status < 300) {
-        resolve(JSON.parse(request.responseText) as TranscriptionJob);
-      } else {
-        reject(toApiError({ status: request.status, body: request.responseText }));
+      const { status, responseText: body } = request;
+
+      if (status < 200 || status >= 300) {
+        reject(toApiError({ status, body }));
+        return;
+      }
+
+      try {
+        resolve(parseApiResponse<TranscriptionJob>({ status, body }));
+      } catch (error) {
+        reject(error);
       }
     };
     request.onerror = () => {

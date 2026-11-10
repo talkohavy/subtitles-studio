@@ -25,6 +25,21 @@ export function toApiError(props: { status: number; body: string }): ApiError {
   return new ApiError({ message, status });
 }
 
+/**
+ * Reads a successful response's JSON body.
+ *
+ * @throws {ApiError} when the body isn't JSON (e.g. an HTML page from a proxy).
+ */
+export function parseApiResponse<T>(props: { status: number; body: string }): T {
+  const { status, body } = props;
+
+  const parsedBody = parseJson<T>(body);
+
+  if (parsedBody === null) throw new ApiError({ message: 'The server sent a reply the app couldn’t read.', status });
+
+  return parsedBody;
+}
+
 function getFallbackMessage(status: number): string {
   if (status === 0) return 'Can’t reach the server. Check that the backend is running.';
 
