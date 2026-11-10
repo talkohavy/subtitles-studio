@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vite-plus/test';
-import { parseSubtitles, parseTimestamp, type ParsedSubtitles } from './parseSubtitles';
+import { parseSubtitles, parseTimestamp, SubtitlesFileFormats, type ParsedSubtitles } from './parseSubtitles';
 
 function getTexts(parsedSubtitles: ParsedSubtitles | null): Array<string> | undefined {
   return parsedSubtitles?.entries.map((entry) => entry.text);
@@ -146,6 +146,27 @@ describe('parseSubtitles', () => {
     const actualResult = getTexts(parseSubtitles(text));
 
     expect(actualResult).toEqual(['Hi']);
+  });
+
+  it('should read Advanced SubStation dialogue without its section headers', () => {
+    const text =
+      'Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,Hi\nDialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,There';
+
+    const parsedSubtitles = parseSubtitles(text);
+    const actualResult = { format: parsedSubtitles?.format, texts: getTexts(parsedSubtitles) };
+
+    const expectedResult = { format: SubtitlesFileFormats.Ass, texts: ['Hi', 'There'] };
+    expect(actualResult).toEqual(expectedResult);
+  });
+
+  it('should read SubRip whose caption starts with "Dialogue:" as SubRip', () => {
+    const text = '1\n00:00:01,000 --> 00:00:02,000\nDialogue: none needed\n\n2\n00:00:03,000 --> 00:00:04,000\nRight';
+
+    const parsedSubtitles = parseSubtitles(text);
+    const actualResult = { format: parsedSubtitles?.format, texts: getTexts(parsedSubtitles) };
+
+    const expectedResult = { format: SubtitlesFileFormats.Srt, texts: ['Dialogue: none needed', 'Right'] };
+    expect(actualResult).toEqual(expectedResult);
   });
 
   it('should read YouTube’s SBV subtitles', () => {

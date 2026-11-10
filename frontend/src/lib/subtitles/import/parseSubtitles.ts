@@ -48,7 +48,11 @@ const WEBVTT_HEADER = /^WEBVTT(?:[ \t\n]|$)/u;
 const VTT_HEADER_LANGUAGE = /^Language:[ \t]*(\S+)/imu;
 const VTT_METADATA_BLOCK = /^(?:NOTE|STYLE|REGION)(?:[ \t]|$)/u;
 const ASS_SECTION = /^\[(?:Script Info|V4\+? Styles|Events)\]/imu;
-const ASS_DIALOGUE = /^Dialogue:/imu;
+const ASS_TIMESTAMP = String.raw`\d+:\d{1,2}:\d{1,2}[.,]\d{1,3}`;
+/**
+ * A dialogue line with its layer, start and end, as in ASS files that lack their section headers.
+ */
+const ASS_DIALOGUE = new RegExp(String.raw`^Dialogue\s*:[^,\n]*,\s*${ASS_TIMESTAMP}\s*,\s*${ASS_TIMESTAMP}\s*,`, 'imu');
 const INDEX_LINE = /^\s*\d+\s*$/u;
 
 /**
@@ -63,12 +67,15 @@ export function parseSubtitles(text: string): ParsedSubtitles | null {
   if (WEBVTT_HEADER.test(normalizedText.trimStart()))
     return parseTimedBlocks({ lines, format: SubtitlesFileFormats.Vtt });
 
-  if (ASS_SECTION.test(normalizedText) || ASS_DIALOGUE.test(normalizedText)) return parseAss(lines);
+  if (ASS_SECTION.test(normalizedText)) return parseAss(lines);
 
+  // Before the dialogue-line check, since a SubRip caption can itself start with "Dialogue:".
   if (lines.some((line) => ARROW_TIMING.test(line)))
     return parseTimedBlocks({ lines, format: SubtitlesFileFormats.Srt });
 
   if (lines.some((line) => SBV_TIMING.test(line))) return parseTimedBlocks({ lines, format: SubtitlesFileFormats.Sbv });
+
+  if (ASS_DIALOGUE.test(normalizedText)) return parseAss(lines);
 
   return null;
 }
