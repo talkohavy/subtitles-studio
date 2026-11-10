@@ -126,6 +126,32 @@ describe('createCueAfter', () => {
     ];
     expect(actualResult).toEqual(expectedResult);
   });
+
+  it('should end at the end of the video after the last caption', () => {
+    const cues = [makeCue({ id: 'a', start: 8, end: 9.5 })];
+
+    const { cues: updatedCues } = createCueAfter({ cues, index: 0, mediaDurationSec: 10, newCueId: 'new' });
+    const actualResult = updatedCues.map((cue) => [cue.id, cue.start, cue.end]);
+
+    const expectedResult = [
+      ['a', 8, 9.5],
+      ['new', 9.5, 10],
+    ];
+    expect(actualResult).toEqual(expectedResult);
+  });
+
+  it('should take the second half of the last caption when it reaches the end of the video', () => {
+    const cues = [makeCue({ id: 'a', start: 8, end: 10 })];
+
+    const { cues: updatedCues } = createCueAfter({ cues, index: 0, mediaDurationSec: 10, newCueId: 'new' });
+    const actualResult = updatedCues.map((cue) => [cue.id, cue.start, cue.end]);
+
+    const expectedResult = [
+      ['a', 8, 9],
+      ['new', 9, 10],
+    ];
+    expect(actualResult).toEqual(expectedResult);
+  });
 });
 
 describe('createCueAtTime', () => {

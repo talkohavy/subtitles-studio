@@ -172,7 +172,7 @@ export function createCueAfter(props: CreateCueAfterProps): { cues: Array<Cue>; 
   const previousCue = cues[index];
   const nextCue = cues[index + 1];
   const gapStart = previousCue?.end ?? 0;
-  const gapEnd = nextCue?.start ?? Math.max(mediaDurationSec, gapStart + NEW_CUE_DURATION_SEC);
+  const gapEnd = nextCue?.start ?? mediaDurationSec;
   const updatedCues = [...cues];
 
   let start = gapStart;
