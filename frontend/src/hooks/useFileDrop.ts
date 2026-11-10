@@ -2,21 +2,20 @@ import { useState, type DragEvent } from 'react';
 
 type UseFileDropProps = {
   onFiles: (files: Array<File>) => void;
-  disabled?: boolean;
 };
 
 /**
  * Drag-and-drop handlers for an element that takes files, and whether files are dragged over it.
  */
 export function useFileDrop(props: UseFileDropProps) {
-  const { onFiles, disabled } = props;
+  const { onFiles } = props;
 
   const [isDragOver, setIsDragOver] = useState(false);
 
   function onDragOver(event: DragEvent<HTMLElement>) {
     event.preventDefault();
 
-    if (!disabled) setIsDragOver(true);
+    setIsDragOver(true);
   }
 
   function onDragLeave(event: DragEvent<HTMLElement>) {
@@ -31,7 +30,7 @@ export function useFileDrop(props: UseFileDropProps) {
 
     const files = Array.from(event.dataTransfer.files);
 
-    if (!disabled && files.length > 0) onFiles(files);
+    if (files.length > 0) onFiles(files);
   }
 
   const dropHandlers = { onDragOver, onDragLeave, onDrop };

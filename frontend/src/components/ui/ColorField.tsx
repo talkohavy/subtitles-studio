@@ -5,25 +5,14 @@ type ColorFieldProps = {
   label: string;
   value: string;
   onChange: (value: string) => void;
-  swatches?: ReadonlyArray<string>;
   disabled?: boolean;
 };
 
-const DEFAULT_SWATCHES = [
-  '#ffffff',
-  '#000000',
-  '#facc15',
-  '#ffe14d',
-  '#22c55e',
-  '#22d3ee',
-  '#7c3aed',
-  '#ec4899',
-  '#ef4444',
-];
+const SWATCHES = ['#ffffff', '#000000', '#facc15', '#ffe14d', '#22c55e', '#22d3ee', '#7c3aed', '#ec4899', '#ef4444'];
 const HEX_COLOR = /^#[0-9a-f]{6}$/i;
 
 export function ColorField(props: ColorFieldProps) {
-  const { label, value, onChange, swatches = DEFAULT_SWATCHES, disabled } = props;
+  const { label, value, onChange, disabled } = props;
 
   const inputId = useId();
   const [draftHex, setDraftHex] = useState<string | null>(null);
@@ -65,7 +54,7 @@ export function ColorField(props: ColorFieldProps) {
           className='h-8 w-20 rounded-md border border-zinc-700 bg-zinc-900 px-2 font-mono text-xs text-zinc-200 uppercase outline-none focus:border-violet-500'
         />
         <div className='flex flex-wrap gap-1'>
-          {swatches.map((swatch) => (
+          {SWATCHES.map((swatch) => (
             <button
               key={swatch}
               type='button'

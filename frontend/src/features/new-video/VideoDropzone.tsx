@@ -12,12 +12,11 @@ type VideoDropzoneProps = {
    * Called with the video, and the subtitles file dropped or chosen with it, if any.
    */
   onFiles: (files: { videoFile: File; subtitlesFile: File | null }) => void;
-  disabled?: boolean;
   className?: string;
 };
 
 export function VideoDropzone(props: VideoDropzoneProps) {
-  const { onFiles, disabled, className } = props;
+  const { onFiles, className } = props;
 
   function handleFiles(files: Array<File>) {
     const { videoFile, subtitlesFile, otherFile } = sortDroppedFiles(files);
@@ -35,7 +34,7 @@ export function VideoDropzone(props: VideoDropzoneProps) {
     if (otherFile) toast.error(`“${otherFile.name}” isn’t a video. Try an MP4, MOV, WebM or MKV file.`);
   }
 
-  const { isDragOver, dropHandlers } = useFileDrop({ onFiles: handleFiles, disabled });
+  const { isDragOver, dropHandlers } = useFileDrop({ onFiles: handleFiles });
   const { fileInput, openFilePicker } = useFilePicker({
     accept: `${ACCEPTED_VIDEO_TYPES},${ACCEPTED_SUBTITLES_TYPES}`,
     onFiles: handleFiles,
@@ -48,10 +47,9 @@ export function VideoDropzone(props: VideoDropzoneProps) {
         type='button'
         onClick={openFilePicker}
         {...dropHandlers}
-        disabled={disabled}
         className={cn(
           'flex w-full flex-col items-center gap-3 rounded-xl border-2 border-dashed px-6 py-10 text-center transition-colors',
-          'outline-none focus-visible:border-violet-500 disabled:cursor-not-allowed disabled:opacity-50',
+          'outline-none focus-visible:border-violet-500',
           isDragOver
             ? 'border-violet-500 bg-violet-500/10'
             : 'border-zinc-700 hover:border-zinc-500 hover:bg-zinc-800/40',

@@ -47,22 +47,14 @@ type IconButtonProps = Omit<ButtonProps, 'children' | 'size'> & {
   icon: ReactNode;
   shortcut?: string;
   tooltipSide?: 'top' | 'bottom' | 'left' | 'right';
-  isActive?: boolean;
 };
 
 export function IconButton(props: IconButtonProps) {
-  const { label, icon, shortcut, tooltipSide, isActive, variant = 'ghost', className, ...buttonProps } = props;
+  const { label, icon, shortcut, tooltipSide, variant = 'ghost', ...buttonProps } = props;
 
   return (
     <Tooltip label={label} shortcut={shortcut} side={tooltipSide}>
-      <Button
-        aria-label={label}
-        aria-pressed={isActive}
-        variant={variant}
-        size='icon'
-        className={cn(isActive && 'bg-zinc-800 text-violet-300', className)}
-        {...buttonProps}
-      >
+      <Button aria-label={label} variant={variant} size='icon' {...buttonProps}>
         {icon}
       </Button>
     </Tooltip>
