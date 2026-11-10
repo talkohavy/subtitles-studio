@@ -4,7 +4,7 @@ import { detectTextLanguage } from './detectLanguage';
  * The Windows code pages older subtitles files were saved in, in the order they're preferred when two read equally
  * well.
  */
-export const LEGACY_ENCODINGS = [
+const LEGACY_ENCODINGS = [
   'windows-1252',
   'windows-1255',
   'windows-1256',

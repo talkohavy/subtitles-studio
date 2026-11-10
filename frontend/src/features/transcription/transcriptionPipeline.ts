@@ -122,7 +122,7 @@ export function retranscribe(props: { language: string; modelId: string | null }
 /**
  * Stops any processing and goes back to the start screen.
  */
-export function closeVideo(): AppThunk {
+function closeVideo(): AppThunk {
   return function closeVideoThunk(dispatch) {
     stopActiveRun();
     player.pause();
