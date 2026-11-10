@@ -65,9 +65,11 @@ export function useKeyboardShortcuts() {
 
       if (isKeyboardControl(event.target)) return;
 
-      const isButton = event.target instanceof HTMLButtonElement;
+      // Timeline captions (`role="button"`) are focused by clicking them, and Space still plays from there, as in video
+      // editors.
+      const usesSpaceItself = event.target instanceof HTMLButtonElement || event.target instanceof HTMLInputElement;
 
-      if (key === ' ' && !isButton) {
+      if (key === ' ' && !usesSpaceItself) {
         event.preventDefault();
         void player.togglePlay();
         return;
