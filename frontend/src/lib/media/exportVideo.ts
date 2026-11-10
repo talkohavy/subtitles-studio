@@ -17,7 +17,7 @@ import { computeOutputSize } from '@src/lib/renderer/geometry';
 import { renderFrame } from '@src/lib/renderer/renderFrame';
 import { ExportQualities, type ExportQualityValues } from './constants';
 import { runCancellable } from './extractAudio';
-import { MediaError } from './media-error';
+import { AudioNotExportableError, MediaError } from './media-error';
 import { openInput } from './openInput';
 import type { CanvasSettings, SubtitleStyle } from '@src/lib/renderer/types';
 import type { Cue } from '@src/lib/subtitles/types';
@@ -29,6 +29,11 @@ type ExportVideoProps = {
   canvasSettings: CanvasSettings;
   language: string | null;
   quality: ExportQualityValues;
+  /**
+   * Export without the audio when it can't be exported,
+   * instead of throwing `AudioNotExportableError`.
+   */
+  allowDroppingAudio: boolean;
   /**
    * Called with a number from 0 to 1.
    */
@@ -43,10 +48,13 @@ const AAC_SAMPLE_RATES = [48_000, 44_100];
 
 /**
  * Re-encodes the video with the captions drawn into every frame, entirely in the browser. AAC audio is copied as is;
- * other audio becomes AAC when the browser can encode it.
+ * other audio becomes AAC when the browser can decode it and encode AAC.
+ *
+ * @throws {AudioNotExportableError} before encoding anything, when the audio would be dropped and
+ * `allowDroppingAudio` is off.
  */
 export async function exportVideo(props: ExportVideoProps): Promise<Blob> {
-  const { file, cues, style, canvasSettings, language, quality, onProgress, signal } = props;
+  const { file, cues, style, canvasSettings, language, quality, allowDroppingAudio, onProgress, signal } = props;
 
   const input = openInput(file);
 
@@ -128,6 +136,17 @@ export async function exportVideo(props: ExportVideoProps): Promise<Blob> {
       throw new MediaError(`This video can’t be exported in your browser (${reasons.join(', ')}).`);
     }
 
+    const isAudioDropped = conversion.discardedTracks.some((discarded) => discarded.track.type === 'audio');
+
+    if (isAudioDropped && !allowDroppingAudio) {
+      const codec = await audioTrack?.getCodec();
+      const codecLabel = codec ? ` (${codec.toUpperCase()})` : '';
+
+      throw new AudioNotExportableError(
+        `Your browser can’t convert this video’s audio${codecLabel}, so the exported video would have no sound.`,
+      );
+    }
+
     conversion.onProgress = (progress) => onProgress(progress);
 
     await runCancellable({ conversion, signal });
@@ -146,13 +165,18 @@ type GetAudioOptionsProps = {
 };
 
 /**
- * MP4 can also hold Opus or MP3, but video editors, phones and social networks reliably accept only AAC. Without an
- * AAC encoder, the audio is copied (or converted) the way Mediabunny sees fit.
+ * MP4 can also hold Opus or MP3, but video editors, phones and social networks reliably accept only AAC. When the
+ * browser can't decode the audio (e.g. AC-3 or DTS in Chrome) or has no AAC encoder, the audio is copied (or
+ * converted) the way Mediabunny sees fit.
  */
 async function getAudioOptions(props: GetAudioOptionsProps): Promise<ConversionAudioOptions | undefined> {
   const { audioTrack, quality } = props;
 
-  if (!audioTrack || (await audioTrack.getCodec()) === 'aac') return undefined;
+  if (!audioTrack || (await audioTrack.getCodec()) === 'aac') return;
+
+  const canDecode = await audioTrack.canDecode();
+
+  if (!canDecode) return;
 
   const numberOfChannels = await audioTrack.getNumberOfChannels();
   const sampleRates = [await audioTrack.getSampleRate(), ...AAC_SAMPLE_RATES];

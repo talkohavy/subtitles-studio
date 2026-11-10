@@ -7,3 +7,14 @@ export class MediaError extends Error {
     this.name = 'MediaError';
   }
 }
+
+/**
+ * The video can only be exported without its audio,
+ * which needs the user's consent.
+ */
+export class AudioNotExportableError extends MediaError {
+  constructor(message: string) {
+    super(message);
+    this.name = 'AudioNotExportableError';
+  }
+}

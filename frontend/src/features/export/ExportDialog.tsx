@@ -5,6 +5,7 @@ import { formatTime } from '@src/common/utils/formatTime';
 import { getErrorMessage, isAbortError } from '@src/common/utils/getErrorMessage';
 import { ExportQualities, type ExportQualityValues } from '@src/lib/media/constants';
 import { exportVideo } from '@src/lib/media/exportVideo';
+import { AudioNotExportableError } from '@src/lib/media/media-error';
 import { mediaStore } from '@src/lib/media/mediaStore';
 import { player } from '@src/lib/player/playerController';
 import { computeOutputSize } from '@src/lib/renderer/geometry';
@@ -37,6 +38,7 @@ const QUALITY_OPTIONS: ReadonlyArray<{ value: ExportQualityValues; label: string
 
 type ExportState =
   | { status: 'idle' }
+  | { status: 'confirmingNoAudio'; message: string }
   | { status: 'exporting'; progress: number; elapsedSec: number }
   | { status: 'done'; blob: Blob; fileName: string; elapsedSec: number }
   | { status: 'failed'; error: string };
@@ -104,7 +106,7 @@ function ExportDialogContent(props: ExportDialogContentProps) {
       })
     : null;
 
-  async function startExport() {
+  async function startExport(allowDroppingAudio: boolean) {
     const { file } = mediaStore.getSnapshot();
 
     if (!file) return;
@@ -137,6 +139,7 @@ function ExportDialogContent(props: ExportDialogContentProps) {
         canvasSettings,
         language,
         quality: exportQuality,
+        allowDroppingAudio,
         onProgress: handleProgress,
         signal: controller.signal,
       });
@@ -150,7 +153,14 @@ function ExportDialogContent(props: ExportDialogContentProps) {
       });
     } catch (error) {
       const wasCanceled = controller.signal.aborted || isAbortError(error);
-      setExportState(wasCanceled ? IDLE_STATE : { status: 'failed', error: getErrorMessage(error) });
+
+      if (wasCanceled) {
+        setExportState(IDLE_STATE);
+      } else if (error instanceof AudioNotExportableError) {
+        setExportState({ status: 'confirmingNoAudio', message: error.message });
+      } else {
+        setExportState({ status: 'failed', error: getErrorMessage(error) });
+      }
     } finally {
       if (controllerRef.current === controller) controllerRef.current = null;
     }
@@ -192,6 +202,32 @@ function ExportDialogContent(props: ExportDialogContentProps) {
     );
   }
 
+  if (exportState.status === 'confirmingNoAudio') {
+    return (
+      <div className='space-y-5'>
+        <div className='flex gap-2.5 rounded-lg bg-amber-500/10 p-3 text-sm text-amber-200'>
+          <CircleExclamationPoint className='mt-0.5 size-4 shrink-0' />
+          
+          <p>
+            {exportState.message} To keep the sound, convert the video’s audio to AAC first (e.g. with HandBrake or
+            ffmpeg).
+          </p>
+        </div>
+        
+        <div className='flex justify-end gap-2'>
+          <Button variant='ghost' size='sm' onClick={() => setExportState(IDLE_STATE)}>
+            Cancel
+          </Button>
+          
+          <Button variant='primary' size='sm' onClick={() => startExport(true)}>
+            <Download className='size-4' />
+            Export without sound
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   if (exportState.status === 'done') {
     const { blob, fileName: outputFileName, elapsedSec } = exportState;
 
@@ -227,19 +263,22 @@ function ExportDialogContent(props: ExportDialogContentProps) {
           {exportState.error}
         </div>
       )}
+      
       <dl className='grid grid-cols-3 gap-3'>
         <SummaryItem label='Size' value={outputSize ? `${outputSize.width}×${outputSize.height}` : '—'} />
         <SummaryItem label='Length' value={video ? formatTime(video.durationSec) : '—'} />
         <SummaryItem label='Subtitles' value={String(cues.length)} />
       </dl>
+      
       <SegmentedControl
         label='Quality'
         value={exportQuality}
         options={QUALITY_OPTIONS}
         onChange={(value) => dispatch(settingsChanged({ exportQuality: value }))}
       />
+      
       <div className='flex justify-end'>
-        <Button variant='primary' onClick={() => void startExport()}>
+        <Button variant='primary' onClick={() => void startExport(false)}>
           <Download className='size-4' />
           {exportState.status === 'failed' ? 'Try again' : 'Export MP4'}
         </Button>
