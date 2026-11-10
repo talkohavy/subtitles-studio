@@ -1,0 +1,113 @@
+diff --git a/dist/modules/src/media-sink.js b/dist/modules/src/media-sink.js
+index 636382fa9b2739539722ce8a24a5b8fd259ed9ee..c825c935c0708803975585ed95f66a6ae896f7e3 100644
+--- a/dist/modules/src/media-sink.js
++++ b/dist/modules/src/media-sink.js
+@@ -701,6 +701,38 @@ export class BaseMediaSampleSink {
+         };
+     }
+ }
++/**
++ * Whether the packet is a lone VP9 frame that gets decoded but not shown, like an alt-ref frame that wasn't packed into
++ * a superframe together with the next shown frame. Decoders output nothing for such a packet.
++ */
++const isHiddenVp9Packet = (data) => {
++    // http://downloads.webmproject.org/docs/vp9/vp9-bitstream_superframe-and-uncompressed-header_v1.0.pdf
++    const lastByte = data[data.length - 1];
++    if (lastByte === undefined) {
++        return false;
++    }
++    if ((lastByte & 0xe0) === 0xc0) {
++        const frameCount = (lastByte & 0x07) + 1;
++        const frameSizeLength = ((lastByte >> 3) & 0x03) + 1;
++        const indexLength = 2 + frameCount * frameSizeLength;
++        if (data[data.length - indexLength] === lastByte) {
++            // A superframe packs hidden frames together with the frame that's shown after them
++            return false;
++        }
++    }
++    let header = data[0];
++    const frameMarker = header >> 6;
++    if (frameMarker !== 0b10) {
++        return false;
++    }
++    if ((header & 0x30) === 0x30) {
++        // Profile 3 has a reserved bit before show_existing_frame
++        header <<= 1;
++    }
++    const showExistingFrame = (header >> 3) & 1;
++    const showFrame = (header >> 1) & 1;
++    return showExistingFrame === 0 && showFrame === 0;
++};
+ class VideoDecoderWrapper extends DecoderWrapper {
+     constructor(onSample, onError, codec, decoderConfig, rotation, flip, timeResolution) {
+         super(onSample, onError);
+@@ -863,7 +895,8 @@ class VideoDecoderWrapper extends DecoderWrapper {
+         }
+         else {
+             assert(this.decoder);
+-            if (!isWebKit()) {
++            // sampleHandler hands each decoded frame one of these timestamps, and hidden VP9 frames decode to nothing
++            if (!isWebKit() && !(this.codec === 'vp9' && isHiddenVp9Packet(packet.data))) {
+                 insertSorted(this.inputTimestamps, packet.timestamp, x => x);
+             }
+             if (isChromium() && this.currentPacketIndex === 0) {
+diff --git a/src/media-sink.ts b/src/media-sink.ts
+index 1e88c0b2146cd467abcc80b0488ad99ee958f180..3e6218e2aa4064cd315ad89f05836ad998995bc7 100644
+--- a/src/media-sink.ts
++++ b/src/media-sink.ts
+@@ -938,6 +938,45 @@ export abstract class BaseMediaSampleSink<
+ 	}
+ }
+ 
++/**
++ * Whether the packet is a lone VP9 frame that gets decoded but not shown, like an alt-ref frame that wasn't packed into
++ * a superframe together with the next shown frame. Decoders output nothing for such a packet.
++ */
++const isHiddenVp9Packet = (data: Uint8Array) => {
++	// http://downloads.webmproject.org/docs/vp9/vp9-bitstream_superframe-and-uncompressed-header_v1.0.pdf
++	const lastByte = data[data.length - 1];
++	if (lastByte === undefined) {
++		return false;
++	}
++
++	if ((lastByte & 0xe0) === 0xc0) {
++		const frameCount = (lastByte & 0x07) + 1;
++		const frameSizeLength = ((lastByte >> 3) & 0x03) + 1;
++		const indexLength = 2 + frameCount * frameSizeLength;
++
++		if (data[data.length - indexLength] === lastByte) {
++			// A superframe packs hidden frames together with the frame that's shown after them
++			return false;
++		}
++	}
++
++	let header = data[0]!;
++	const frameMarker = header >> 6;
++	if (frameMarker !== 0b10) {
++		return false;
++	}
++
++	if ((header & 0x30) === 0x30) {
++		// Profile 3 has a reserved bit before show_existing_frame
++		header <<= 1;
++	}
++
++	const showExistingFrame = (header >> 3) & 1;
++	const showFrame = (header >> 1) & 1;
++
++	return showExistingFrame === 0 && showFrame === 0;
++};
++
+ class VideoDecoderWrapper extends DecoderWrapper<VideoSample> {
+ 	decoder: VideoDecoder | null = null;
+ 
+@@ -1123,7 +1162,8 @@ class VideoDecoderWrapper extends DecoderWrapper<VideoSample> {
+ 		} else {
+ 			assert(this.decoder);
+ 
+-			if (!isWebKit()) {
++			// sampleHandler hands each decoded frame one of these timestamps, and hidden VP9 frames decode to nothing
++			if (!isWebKit() && !(this.codec === 'vp9' && isHiddenVp9Packet(packet.data))) {
+ 				insertSorted(this.inputTimestamps, packet.timestamp, x => x);
+ 			}
+ 

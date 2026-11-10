@@ -24,3 +24,6 @@ allowBuilds:
   onnxruntime-node: false
   protobufjs: false
   sharp: false
+
+patchedDependencies:
+  mediabunny@1.65.2: patches/mediabunny@1.65.2.patch
