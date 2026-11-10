@@ -58,6 +58,11 @@ const BYTES_IN_MB = 1024 * 1024;
 export class TranscriptionService {
   private readonly config: TranscriptionConfig;
   private readonly jobsService: TranscriptionJobsService;
+  /**
+   * Uploads still being received. Each holds a place in the queue, so uploads that start together can't all pass the
+   * queue limit, and an accepted upload doesn't find the queue full once it's received.
+   */
+  private uploadsInProgress = 0;
 
   constructor(props: TranscriptionServiceProps) {
     const { config, jobsService } = props;
@@ -70,7 +75,7 @@ export class TranscriptionService {
     const { audioStream, contentLength, language, modelId = this.config.defaultModelId } = props;
     const { maxUploadBytes, maxQueuedJobs, uploadsDir } = this.config;
 
-    if (this.jobsService.pendingJobsCount >= maxQueuedJobs) {
+    if (this.jobsService.pendingJobsCount + this.uploadsInProgress >= maxQueuedJobs) {
       throw new TooManyRequestsError(
         `The server is busy with ${maxQueuedJobs} transcriptions. Please try again in a few minutes`,
       );
@@ -80,6 +85,7 @@ export class TranscriptionService {
 
     const jobId = randomUUID();
     const audioPath = path.join(uploadsDir, `${jobId}.wav`);
+    this.uploadsInProgress++;
 
     try {
       const fileSize = await saveStreamToFile({ stream: audioStream, filePath: audioPath, maxBytes: maxUploadBytes });
@@ -104,6 +110,8 @@ export class TranscriptionService {
       if (error instanceof MaxBytesExceededError) throw this.createUploadTooLargeError();
 
       throw error;
+    } finally {
+      this.uploadsInProgress--;
     }
   }
 
