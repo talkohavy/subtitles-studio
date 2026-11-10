@@ -7,9 +7,12 @@ import { cuesImported, projectLoaded } from '../../store/slices/project.slice';
 import { sessionReady } from '../../store/slices/session.slice';
 import { cueSelected } from '../../store/slices/ui.slice';
 import { undoNotifiedChange } from '../history/historyThunks';
-import { getLanguageName } from '../new-video/languages';
 import { finishRun, type ProcessingRun } from '../processing/processingRun';
-import { translateNewSubtitles, translateSubtitles } from '../translation/translationPipeline';
+import {
+  getAlreadyInLanguageMessage,
+  translateNewSubtitles,
+  translateSubtitles,
+} from '../translation/translationPipeline';
 import type { AppDispatch, AppThunk, RootState } from '../../store';
 
 type AddSubtitlesFileProps = {
@@ -81,7 +84,7 @@ export function replaceSubtitles(props: ReplaceSubtitlesProps): AppThunk<Promise
     if (!translationLanguage || !language) return;
 
     if (language === translationLanguage) {
-      toast.info(`The subtitles are already in ${getLanguageName(language)}, so there’s nothing to translate.`);
+      toast.info(getAlreadyInLanguageMessage(language));
       return;
     }
 

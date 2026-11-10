@@ -20,7 +20,7 @@ import { addCueAtTime } from '../subtitles/cueThunks';
 import { drawTimelineBackground, TIMELINE_LAYOUT } from './drawTimelineBackground';
 import { Playhead } from './Playhead';
 import { TimelineCue } from './TimelineCue';
-import { TIMELINE_END_PADDING_PX } from './timelineScale';
+import { getStoredZoom, TIMELINE_END_PADDING_PX } from './timelineScale';
 
 /**
  * While playing, the view jumps ahead once the playhead gets this close to its right edge.
@@ -116,14 +116,10 @@ export function Timeline(props: TimelineProps) {
 
     const offsetX = event.clientX - scroller.getBoundingClientRect().left;
     const time = (scroller.scrollLeft + offsetX) / pxPerSec;
-    const nextPxPerSec = clamp({
-      value: pxPerSec * Math.exp(-event.deltaY * WHEEL_ZOOM_SENSITIVITY),
-      min: fitPxPerSec,
-      max: maxPxPerSec,
-    });
+    const nextPxPerSec = pxPerSec * Math.exp(-event.deltaY * WHEEL_ZOOM_SENSITIVITY);
 
     zoomAnchorRef.current = { time, offsetX };
-    dispatch(timelineZoomChanged(nextPxPerSec <= fitPxPerSec * 1.001 ? null : nextPxPerSec));
+    dispatch(timelineZoomChanged(getStoredZoom({ pxPerSec: nextPxPerSec, fitPxPerSec, maxPxPerSec })));
   });
 
   useEffect(() => {

@@ -1,5 +1,5 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
-import type { TranscriptionJob, TranslationJob } from '@src/lib/api/types';
+import { AUTO_DETECT_LANGUAGE, type TranscriptionJob, type TranslationJob } from '@src/lib/api/types';
 import type { VideoInfo } from '@src/lib/media/probeVideo';
 
 export const SessionPhases = {
@@ -91,7 +91,7 @@ const initialState: SessionState = {
   transcription: null,
   transcriptPreview: '',
   error: null,
-  requestedLanguage: 'auto',
+  requestedLanguage: AUTO_DETECT_LANGUAGE,
   translationLanguage: null,
   task: ProcessingTasks.Transcribe,
   subtitlesFileName: null,

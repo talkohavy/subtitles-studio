@@ -1,10 +1,9 @@
 import { Maximize2, ZoomIn, ZoomOut } from 'lucide-react';
-import { clamp } from '@src/common/utils/clamp';
 import { IconButton } from '../../components/ui/Button';
 import { SliderControl } from '../../components/ui/SliderField';
 import { useAppDispatch } from '../../store';
 import { timelineZoomChanged } from '../../store/slices/ui.slice';
-import { sliderValueToZoom, zoomToSliderValue } from '../timeline/timelineScale';
+import { getStoredZoom, sliderValueToZoom, zoomToSliderValue } from '../timeline/timelineScale';
 
 export type ZoomState = {
   pxPerSec: number;
@@ -24,10 +23,7 @@ export function ZoomControl(props: { zoom: ZoomState; disabled?: boolean }) {
   const sliderValue = zoomToSliderValue({ pxPerSec, fitPxPerSec, maxPxPerSec });
 
   function setZoom(nextPxPerSec: number) {
-    const clampedPxPerSec = clamp({ value: nextPxPerSec, min: fitPxPerSec, max: maxPxPerSec });
-    const isFit = clampedPxPerSec <= fitPxPerSec * 1.001;
-
-    dispatch(timelineZoomChanged(isFit ? null : clampedPxPerSec));
+    dispatch(timelineZoomChanged(getStoredZoom({ pxPerSec: nextPxPerSec, fitPxPerSec, maxPxPerSec })));
   }
 
   function handleSliderChange(values: Array<number>) {

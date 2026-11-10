@@ -9,6 +9,11 @@ export const MAX_PX_PER_SEC = 400;
  */
 export const TIMELINE_END_PADDING_PX = 24;
 
+/**
+ * A zoom this close to "fit" counts as fit, so rounding doesn't leave the timeline a hair wider than the view.
+ */
+const FIT_ZOOM_TOLERANCE = 1.001;
+
 const MAJOR_STEPS_SEC = [0.1, 0.2, 0.5, 1, 2, 5, 10, 15, 30, 60, 120, 300, 600, 900, 1800, 3600];
 const MIN_MAJOR_SPACING_PX = 72;
 const MIN_MINOR_SPACING_PX = 7;
@@ -67,6 +72,19 @@ export function zoomToSliderValue(props: ZoomRange & { pxPerSec: number }): numb
   const value = (Math.log(pxPerSec / fitPxPerSec) / Math.log(maxPxPerSec / fitPxPerSec)) * 100;
 
   return clamp({ value, min: 0, max: 100 });
+}
+
+/**
+ * The zoom to store for `pxPerSec`: kept within the range, and `null` when it fits the whole video, so the timeline
+ * keeps fitting when the view is resized.
+ */
+export function getStoredZoom(props: ZoomRange & { pxPerSec: number }): number | null {
+  const { pxPerSec, fitPxPerSec, maxPxPerSec } = props;
+
+  const clampedPxPerSec = clamp({ value: pxPerSec, min: fitPxPerSec, max: maxPxPerSec });
+  const isFit = clampedPxPerSec <= fitPxPerSec * FIT_ZOOM_TOLERANCE;
+
+  return isFit ? null : clampedPxPerSec;
 }
 
 export function sliderValueToZoom(props: ZoomRange & { value: number }): number {

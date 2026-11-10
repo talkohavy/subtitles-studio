@@ -12,7 +12,24 @@ export type VideoInfo = {
   hasAudio: boolean;
 };
 
-export async function probeVideo(file: File): Promise<VideoInfo> {
+/**
+ * A `File`'s content never changes, so each one is read once, even though the setup dialog and opening the video
+ * both ask. Failures are kept too, so both report the same problem.
+ */
+const probes = new WeakMap<File, Promise<VideoInfo>>();
+
+export function probeVideo(file: File): Promise<VideoInfo> {
+  const cachedProbe = probes.get(file);
+
+  if (cachedProbe) return cachedProbe;
+
+  const probe = readVideoInfo(file);
+  probes.set(file, probe);
+
+  return probe;
+}
+
+async function readVideoInfo(file: File): Promise<VideoInfo> {
   const input = openInput(file);
 
   try {

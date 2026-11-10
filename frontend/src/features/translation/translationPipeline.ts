@@ -70,6 +70,15 @@ type TranslateNewSubtitlesProps = {
 };
 
 /**
+ * Shown instead of translating subtitles that are already in the language asked for.
+ */
+export function getAlreadyInLanguageMessage(language: string): string {
+  const message = `The subtitles are already in ${getLanguageName(language)}, so there’s nothing to translate.`;
+
+  return message;
+}
+
+/**
  * Translates subtitles that were just made (transcribed, or read from a file) as part of the same processing. When
  * the translation fails, the subtitles stay in their language.
  *
@@ -81,7 +90,7 @@ export async function translateNewSubtitles(props: TranslateNewSubtitlesProps): 
   if (!sourceLanguage) return;
 
   if (sourceLanguage === targetLanguage) {
-    toast.info(`The subtitles are already in ${getLanguageName(targetLanguage)}, so there’s nothing to translate.`);
+    toast.info(getAlreadyInLanguageMessage(targetLanguage));
     return;
   }
 

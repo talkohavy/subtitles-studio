@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
+import { formatCount } from '@src/common/utils/formatCount';
 import { countMatches, findAndReplace, removeFillerWords, removePunctuation } from '@src/lib/subtitles/cleanupText';
 import { Button } from '../../components/ui/Button';
 import { PanelSection } from '../../components/ui/PanelSection';
@@ -32,12 +33,6 @@ export function EnhancePanel() {
   );
 }
 
-function pluralize(props: { count: number; singular: string; plural: string }): string {
-  const { count, singular, plural } = props;
-
-  return `${count} ${count === 1 ? singular : plural}`;
-}
-
 function CleanUpSection(props: { isEditable: boolean }) {
   const { isEditable } = props;
 
@@ -49,15 +44,13 @@ function CleanUpSection(props: { isEditable: boolean }) {
 
   function applyFillerRemoval() {
     dispatch(cuesReplaced({ cues: fillerResult.cues }));
-    toast.success(
-      `Removed filler words from ${pluralize({ count: fillerResult.changedCount, singular: 'subtitle', plural: 'subtitles' })}.`,
-    );
+    toast.success(`Removed filler words from ${formatCount({ count: fillerResult.changedCount, noun: 'subtitle' })}.`);
   }
 
   function applyPunctuationRemoval() {
     dispatch(cuesReplaced({ cues: punctuationResult.cues }));
     toast.success(
-      `Removed punctuation from ${pluralize({ count: punctuationResult.changedCount, singular: 'subtitle', plural: 'subtitles' })}.`,
+      `Removed punctuation from ${formatCount({ count: punctuationResult.changedCount, noun: 'subtitle' })}.`,
     );
   }
 
@@ -121,7 +114,7 @@ function FindAndReplaceSection(props: { isEditable: boolean }) {
   function handleReplaceAll() {
     const result = findAndReplace({ cues, find, replaceWith, matchCase, language });
     dispatch(cuesReplaced({ cues: result.cues }));
-    toast.success(`Replaced ${pluralize({ count: matchCount, singular: 'match', plural: 'matches' })}.`);
+    toast.success(`Replaced ${formatCount({ count: matchCount, noun: 'match', plural: 'matches' })}.`);
   }
 
   return (
@@ -147,7 +140,7 @@ function FindAndReplaceSection(props: { isEditable: boolean }) {
       <SwitchField label='Match case' checked={matchCase} onChange={setMatchCase} disabled={!isEditable} />
       <div className='flex items-center justify-between gap-3'>
         <span className='text-xs text-zinc-500'>
-          {find ? pluralize({ count: matchCount, singular: 'match', plural: 'matches' }) : ''}
+          {find ? formatCount({ count: matchCount, noun: 'match', plural: 'matches' }) : ''}
         </span>
         <Button size='sm' variant='primary' onClick={handleReplaceAll} disabled={!isEditable || matchCount === 0}>
           Replace all

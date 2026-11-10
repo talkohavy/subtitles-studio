@@ -1,5 +1,20 @@
 import { describe, expect, it } from 'vite-plus/test';
-import { formatRulerLabel, getRulerSteps, sliderValueToZoom, zoomToSliderValue } from './timelineScale';
+import { formatRulerLabel, getRulerSteps, getStoredZoom, sliderValueToZoom, zoomToSliderValue } from './timelineScale';
+
+describe('getStoredZoom', () => {
+  it('should keep the zoom within range, and store a zoom at or near fit as null', () => {
+    const range = { fitPxPerSec: 10, maxPxPerSec: 400 };
+    const actualResult = [
+      getStoredZoom({ ...range, pxPerSec: 50 }),
+      getStoredZoom({ ...range, pxPerSec: 1000 }),
+      getStoredZoom({ ...range, pxPerSec: 5 }),
+      getStoredZoom({ ...range, pxPerSec: 10.005 }),
+    ];
+
+    const expectedResult = [50, 400, null, null];
+    expect(actualResult).toEqual(expectedResult);
+  });
+});
 
 describe('getRulerSteps', () => {
   it('should space labeled ticks apart and add small ticks between them', () => {
