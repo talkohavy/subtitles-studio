@@ -60,8 +60,14 @@ class PlayerController {
       timeupdate: () => {
         if (!this.state.isPlaying) this.syncFromVideo();
       },
+      // The element keeps its rate, volume and muting when its video changes.
       emptied: () =>
-        this.setState({ ...INITIAL_STATE, playbackRate: this.state.playbackRate, volume: this.state.volume }),
+        this.setState({
+          ...INITIAL_STATE,
+          playbackRate: this.state.playbackRate,
+          volume: this.state.volume,
+          isMuted: this.state.isMuted,
+        }),
     };
 
     Object.entries(handlers).forEach(([eventType, handler]) => video.addEventListener(eventType, handler));

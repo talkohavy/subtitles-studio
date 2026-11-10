@@ -28,6 +28,7 @@ export function BackgroundPanel() {
       <PanelBody>
         <PanelSection title='Box'>
           <SegmentedControl
+            ariaLabel='Background box'
             value={style.backgroundMode}
             options={MODE_OPTIONS}
             onChange={(backgroundMode) => setStyle({ backgroundMode })}

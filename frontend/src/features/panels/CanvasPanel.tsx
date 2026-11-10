@@ -96,6 +96,7 @@ export function CanvasPanel() {
         {isReframed && (
           <PanelSection title='Around the video'>
             <SegmentedControl
+              ariaLabel='Around the video'
               value={canvas.fill}
               options={FILL_OPTIONS}
               onChange={(fill) => setCanvas({ fill })}

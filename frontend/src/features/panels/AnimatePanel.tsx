@@ -54,6 +54,7 @@ export function AnimatePanel() {
         </PanelSection>
         <PanelSection title='Spoken word'>
           <SegmentedControl
+            ariaLabel='Spoken word highlight'
             value={style.highlightMode}
             options={HIGHLIGHT_OPTIONS}
             onChange={(highlightMode) => setStyle({ highlightMode })}

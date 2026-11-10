@@ -1,5 +1,5 @@
 import { getStyleScale } from './geometry';
-import { getTextDirection, TextDirections } from './textDirection';
+import { getTextDirection, TextDirections, type TextDirectionValues } from './textDirection';
 import { BackgroundModes, TextAligns, TextTransforms, type Rect, type SubtitleStyle } from './types';
 import type { Word } from '@src/lib/subtitles/types';
 
@@ -11,13 +11,16 @@ export type CaptionToken = {
    */
   text: string;
   /**
-   * The token's position in the caption.
+   * The word's position in the caption. Punctuation drawn apart from its word has the word's index.
    */
   index: number;
   hasSpaceBefore: boolean;
   forcesLineBreak: boolean;
   start: number;
   end: number;
+  /**
+   * The direction it's drawn in. Once laid out, that's its run's direction rather than its own.
+   */
   isRtl: boolean;
   width: number;
 };
@@ -107,7 +110,7 @@ export function layoutCaption(props: LayoutCaptionProps): CaptionLayout {
   const areaRight = frameWidth - areaLeft;
 
   const lines = tokenLines.map((lineTokens, lineIndex) => {
-    const orderedTokens = orderTokensVisually({ tokens: lineTokens, isRtl });
+    const orderedTokens = orderTokensVisually({ tokens: lineTokens, isRtl, measure });
     const gaps = orderedTokens.map((token, index) => getVisualGap({ left: orderedTokens[index - 1], right: token }));
     const width = orderedTokens.reduce((sum, token, index) => sum + token.width + (gaps[index]! ? spaceWidth : 0), 0);
     const x = getLineX({ align: style.align, width, frameWidth, areaLeft, areaRight });
@@ -232,18 +235,26 @@ function wrapGreedily(props: WrapTokensProps): Array<Array<CaptionToken>> {
   return lines;
 }
 
+type OrderTokensVisuallyProps = {
+  tokens: Array<CaptionToken>;
+  isRtl: boolean;
+  measure: MeasureText;
+};
+
 /**
  * Lays words out right-to-left in RTL captions, keeping runs of left-to-right words (and vice versa) in reading order.
+ * Words are drawn in their run's direction; numbers and punctuation on their own take the caption's.
  */
-function orderTokensVisually(props: { tokens: Array<CaptionToken>; isRtl: boolean }): Array<CaptionToken> {
-  const { tokens, isRtl } = props;
+function orderTokensVisually(props: OrderTokensVisuallyProps): Array<CaptionToken> {
+  const { tokens, isRtl, measure } = props;
 
+  const captionDirection = isRtl ? TextDirections.Rtl : TextDirections.Ltr;
   const runs: Array<Array<CaptionToken>> = [];
 
   tokens.forEach((token) => {
     const currentRun = runs.at(-1);
     const tokenDirection = getTextDirection(token.text);
-    const runDirection = currentRun ? getTextDirection(currentRun.map((runToken) => runToken.text).join('')) : null;
+    const runDirection = currentRun ? getRunDirection(currentRun) : null;
     const continuesRun = currentRun && (tokenDirection === TextDirections.Neutral || tokenDirection === runDirection);
 
     if (continuesRun) {
@@ -254,14 +265,93 @@ function orderTokensVisually(props: { tokens: Array<CaptionToken>; isRtl: boolea
   });
 
   const orderedRuns = runs.map((run) => {
-    const runIsRtl = run.some((token) => token.isRtl);
+    const ownDirection = getRunDirection(run);
+    const runDirection = ownDirection === TextDirections.Neutral ? captionDirection : ownDirection;
+    const runIsRtl = runDirection === TextDirections.Rtl;
+    const { leading, core, trailing } =
+      runDirection === captionDirection
+        ? { leading: [], core: run, trailing: [] }
+        : detachEdgePunctuation({ tokens: run, isRtl, measure });
+    const directedCore = core.map((token) => ({ ...token, isRtl: runIsRtl }));
+    const visualCore = runIsRtl ? directedCore.reverse() : directedCore;
 
-    return runIsRtl ? [...run].reverse() : run;
+    return isRtl ? [...[...trailing].reverse(), ...visualCore, ...leading] : [...leading, ...visualCore, ...trailing];
   });
 
   if (isRtl) orderedRuns.reverse();
 
   return orderedRuns.flat();
+}
+
+function getRunDirection(run: ReadonlyArray<CaptionToken>): TextDirectionValues {
+  const runText = run.map((token) => token.text).join('');
+  const runDirection = getTextDirection(runText);
+
+  return runDirection;
+}
+
+/**
+ * Anything but letters, digits and the signs that stay with a number (`50%`, `$5`).
+ */
+const LEADING_PUNCTUATION = /^[^\p{L}\p{M}\p{N}\p{Sc}%‰°#+]+/u;
+const TRAILING_PUNCTUATION = /[^\p{L}\p{M}\p{N}\p{Sc}%‰°#+]+$/u;
+
+type DetachEdgePunctuationProps = {
+  /**
+   * A run in the other direction than the caption's, in reading order.
+   */
+  tokens: ReadonlyArray<CaptionToken>;
+  /**
+   * The caption's direction.
+   */
+  isRtl: boolean;
+  measure: MeasureText;
+};
+
+type DetachedRun = {
+  leading: Array<CaptionToken>;
+  core: Array<CaptionToken>;
+  /**
+   * In reading order.
+   */
+  trailing: Array<CaptionToken>;
+};
+
+/**
+ * Punctuation at the edges of a run in the other direction follows the caption's direction, as in a browser: the
+ * period after an English word that ends a Hebrew sentence goes at the far left, outside the English run. Each piece
+ * keeps its word's timing, so it lights up with the word.
+ */
+function detachEdgePunctuation(props: DetachEdgePunctuationProps): DetachedRun {
+  const { tokens, isRtl, measure } = props;
+
+  const core = [...tokens];
+  const leading: Array<CaptionToken> = [];
+  const trailing: Array<CaptionToken> = [];
+
+  while (core.length > 1 && TRAILING_PUNCTUATION.exec(core.at(-1)!.text)?.[0] === core.at(-1)!.text) {
+    trailing.unshift({ ...core.pop()!, isRtl });
+  }
+
+  const lastToken = core.at(-1)!;
+  const trailingText = TRAILING_PUNCTUATION.exec(lastToken.text)?.[0];
+
+  if (trailingText && trailingText !== lastToken.text) {
+    const coreText = lastToken.text.slice(0, -trailingText.length);
+    core[core.length - 1] = { ...lastToken, text: coreText, width: measure(coreText) };
+    trailing.unshift({ ...lastToken, text: trailingText, width: measure(trailingText), hasSpaceBefore: false, isRtl });
+  }
+
+  const firstToken = core[0]!;
+  const leadingText = LEADING_PUNCTUATION.exec(firstToken.text)?.[0];
+
+  if (leadingText && leadingText !== firstToken.text) {
+    const coreText = firstToken.text.slice(leadingText.length);
+    core[0] = { ...firstToken, text: coreText, width: measure(coreText), hasSpaceBefore: false };
+    leading.push({ ...firstToken, text: leadingText, width: measure(leadingText), isRtl });
+  }
+
+  return { leading, core, trailing };
 }
 
 /**
@@ -271,6 +361,9 @@ function getVisualGap(props: { left: CaptionToken | undefined; right: CaptionTok
   const { left, right } = props;
 
   if (!left) return false;
+
+  // Pieces of one word, split by `detachEdgePunctuation`.
+  if (left.index === right.index) return false;
 
   if (left.index + 1 === right.index) return right.hasSpaceBefore;
 

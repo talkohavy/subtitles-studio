@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { RadioGroup } from 'radix-ui';
 import { cn } from '@src/common/utils/cn';
 
 export type Choice<T extends string> = {
@@ -20,24 +21,26 @@ type ChoiceGridProps<T extends string> = {
 const COLUMN_CLASSES = { 2: 'grid-cols-2', 3: 'grid-cols-3' } as const;
 
 /**
- * A group of large options, one of which is selected.
+ * A group of large options, one of which is selected. A single Tab stop; the arrow keys move between options.
  */
 export function ChoiceGrid<T extends string>(props: ChoiceGridProps<T>) {
   const { label, value, choices, onChange, columns = 2, disabled } = props;
 
   return (
-    <div role='radiogroup' aria-label={label} className={cn('grid gap-2', COLUMN_CLASSES[columns])}>
+    <RadioGroup.Root
+      value={value}
+      onValueChange={(nextValue) => onChange(nextValue as T)}
+      disabled={disabled}
+      aria-label={label}
+      className={cn('grid gap-2', COLUMN_CLASSES[columns])}
+    >
       {choices.map((choice) => {
         const isSelected = choice.value === value;
 
         return (
-          <button
+          <RadioGroup.Item
             key={choice.value}
-            type='button'
-            role='radio'
-            aria-checked={isSelected}
-            disabled={disabled}
-            onClick={() => onChange(choice.value)}
+            value={choice.value}
             className={cn(
               'flex flex-col items-center gap-1.5 rounded-xl border px-2 py-3 text-center transition-colors outline-none',
               'focus-visible:ring-2 focus-visible:ring-violet-500/60 disabled:cursor-not-allowed disabled:opacity-50',
@@ -51,9 +54,9 @@ export function ChoiceGrid<T extends string>(props: ChoiceGridProps<T>) {
             {choice.description && (
               <span className='text-[10px] leading-tight text-zinc-500'>{choice.description}</span>
             )}
-          </button>
+          </RadioGroup.Item>
         );
       })}
-    </div>
+    </RadioGroup.Root>
   );
 }

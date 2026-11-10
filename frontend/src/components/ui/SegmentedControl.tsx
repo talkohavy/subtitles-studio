@@ -13,6 +13,10 @@ export type SegmentedOption<T extends string> = {
 
 type SegmentedControlProps<T extends string> = {
   label?: string;
+  /**
+   * Accessible name, for controls without a visible `label`.
+   */
+  ariaLabel?: string;
   value: T;
   options: ReadonlyArray<SegmentedOption<T>>;
   onChange: (value: T) => void;
@@ -21,7 +25,7 @@ type SegmentedControlProps<T extends string> = {
 };
 
 export function SegmentedControl<T extends string>(props: SegmentedControlProps<T>) {
-  const { label, value, options, onChange, disabled, className } = props;
+  const { label, ariaLabel, value, options, onChange, disabled, className } = props;
 
   function handleValueChange(nextValue: string) {
     // Clicking the selected option would otherwise deselect it.
@@ -36,7 +40,7 @@ export function SegmentedControl<T extends string>(props: SegmentedControlProps<
         value={value}
         onValueChange={handleValueChange}
         disabled={disabled}
-        aria-label={label}
+        aria-label={label ?? ariaLabel}
         className='flex w-full gap-1 rounded-lg bg-zinc-900 p-1 ring-1 ring-zinc-800'
       >
         {options.map((option) => (
