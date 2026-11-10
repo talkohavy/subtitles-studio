@@ -135,8 +135,8 @@ function SubtitlesPreview(props: { subtitles: SubtitlesFile }) {
 
   return (
     <ol className='space-y-1 rounded-lg bg-zinc-950/70 px-3 py-2.5 text-sm text-zinc-300'>
-      {previewEntries.map((entry) => (
-        <li key={entry.start} className='flex items-baseline gap-3'>
+      {previewEntries.map((entry, index) => (
+        <li key={index} className='flex items-baseline gap-3'>
           <span className='shrink-0 text-xs text-zinc-500 tabular-nums'>{formatTime(entry.start)}</span>
           <span dir='auto' className='min-w-0 flex-1 truncate'>
             {entry.text.replaceAll('\n', ' ')}
