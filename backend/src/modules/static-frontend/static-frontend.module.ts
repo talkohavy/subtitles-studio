@@ -1,7 +1,7 @@
 import { existsSync } from 'fs';
 import path from 'path';
 import { ConfigKeys, type StaticFrontendConfig } from '@src/plugins/config-service';
-import { StaticFrontendController } from './controllers/static-frontend.controller';
+import { StaticFrontendController } from './controllers';
 import type { Application } from 'express';
 import type { ModuleFactory } from '@src/lib/lucky-server';
 
