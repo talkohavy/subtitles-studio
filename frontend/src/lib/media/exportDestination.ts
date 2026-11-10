@@ -36,6 +36,13 @@ export type ExportDestination = {
   discard: () => Promise<void>;
 };
 
+export const BRAVE_FILE_SAVING_FLAG = 'brave://flags/#file-system-access-api';
+
+/**
+ * Brave can save straight to a file like Chrome, but only once the user turns on a flag.
+ */
+export const IS_BRAVE_WITHOUT_FILE_SAVING = navigator.brave !== undefined && window.showSaveFilePicker === undefined;
+
 /**
  * A file the user picks, when the browser can save straight to one (which keeps memory use flat however long the
  * video is), otherwise memory. Must be called right from a click, since the file picker only opens then.

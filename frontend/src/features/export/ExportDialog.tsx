@@ -4,7 +4,12 @@ import { downloadBlob, getBaseFileName } from '@src/common/utils/downloadBlob';
 import { formatTime } from '@src/common/utils/formatTime';
 import { getErrorMessage, isAbortError } from '@src/common/utils/getErrorMessage';
 import { ExportQualities, type ExportQualityValues } from '@src/lib/media/constants';
-import { openExportDestination, type ExportResult } from '@src/lib/media/exportDestination';
+import {
+  BRAVE_FILE_SAVING_FLAG,
+  IS_BRAVE_WITHOUT_FILE_SAVING,
+  openExportDestination,
+  type ExportResult,
+} from '@src/lib/media/exportDestination';
 import { exportVideo } from '@src/lib/media/exportVideo';
 import { AudioNotExportableError } from '@src/lib/media/media-error';
 import { mediaStore } from '@src/lib/media/mediaStore';
@@ -297,6 +302,14 @@ function ExportDialogContent(props: ExportDialogContentProps) {
         options={QUALITY_OPTIONS}
         onChange={(value) => dispatch(settingsChanged({ exportQuality: value }))}
       />
+
+      {IS_BRAVE_WITHOUT_FILE_SAVING && (
+        <p className='text-xs text-zinc-500'>
+          Brave builds the video in memory, which limits it to about 4 GB. To save long videos straight to a file, open{' '}
+          <code className='rounded bg-zinc-800 px-1 py-0.5 text-zinc-300 select-all'>{BRAVE_FILE_SAVING_FLAG}</code>,
+          set it to Enabled, and relaunch Brave.
+        </p>
+      )}
 
       <div className='flex justify-end'>
         <Button variant='primary' onClick={() => void startExport(false)}>

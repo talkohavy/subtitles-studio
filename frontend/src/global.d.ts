@@ -14,3 +14,10 @@ interface Window {
 interface FileSystemHandle {
   remove?: (options?: { recursive?: boolean }) => Promise<void>;
 }
+
+interface Navigator {
+  /**
+   * Only in Brave.
+   */
+  brave?: { isBrave: () => Promise<boolean> };
+}
