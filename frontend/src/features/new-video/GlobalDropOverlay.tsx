@@ -23,6 +23,7 @@ export function GlobalDropOverlay() {
   const isProcessing = useAppSelector(selectIsProcessing);
   const { video } = useAppSelector(selectSession);
   const isNewVideoDialogOpen = useAppSelector((state) => state.ui.isNewVideoDialogOpen);
+  const isExportDialogOpen = useAppSelector((state) => state.ui.isExportDialogOpen);
   const isVideoSetupOpen = useVideoSetup() !== null;
   const [isDragging, setIsDragging] = useState(false);
 
@@ -58,6 +59,11 @@ export function GlobalDropOverlay() {
   }
 
   const openDroppedFiles = useEffectEvent((files: Array<File>) => {
+    if (isExportDialogOpen) {
+      toast.error('Close the export window first, then drop the file again.');
+      return;
+    }
+
     const { videoFile, subtitlesFile, otherFile } = sortDroppedFiles(files);
 
     if (videoFile) {
@@ -131,7 +137,7 @@ export function GlobalDropOverlay() {
     };
   }, []);
 
-  if (!isDragging || isDropTargetShown) return null;
+  if (!isDragging || isDropTargetShown || isExportDialogOpen) return null;
 
   return (
     <div className='pointer-events-none fixed inset-0 z-[60] flex animate-fade-in items-center justify-center bg-zinc-950/80 p-6 backdrop-blur-sm'>
