@@ -1,3 +1,4 @@
+import { StatusCodes } from '@src/common/constants';
 import { handleCors } from './handleCors';
 
 const ALLOWED_ORIGINS = ['http://localhost:3004', 'https://subtitles.example.com'];
@@ -36,5 +37,14 @@ describe('handleCors', () => {
     const actualResult = checkOrigin('https://evil.com');
 
     expect(actualResult).toBe(false);
+  });
+
+  it('should reject with a 403, not a server error', () => {
+    let rejection: any = null;
+    handleCors(ALLOWED_ORIGINS)('https://evil.com', (error: Error | null) => {
+      rejection = error;
+    });
+
+    expect(rejection?.statusCode).toBe(StatusCodes.FORBIDDEN);
   });
 });
