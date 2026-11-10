@@ -22,9 +22,9 @@
   export type DimensionValueTypeValues = (typeof DimensionValueTypes)[keyof typeof DimensionValueTypes];
   ```
 
-  See `src/common/constants/roles.ts` for a reference example in the codebase.
+  See `JobStatuses` in `src/lib/worker-job-queue/logic/constants.ts` for a reference example in the codebase.
 
-  Naming convention: the object is named in **plural** form (e.g. `RoleTypes`, `DimensionValueTypes`), and the derived type is named in the **singular** form of the object name plus a `Values` suffix (e.g. `RoleTypeValues`, `DimensionValueTypeValues`).
+  Naming convention: the object is named in **plural** form (e.g. `JobStatuses`, `DimensionValueTypes`), and the derived type is named in the **singular** form of the object name plus a `Values` suffix (e.g. `JobStatusValues`, `DimensionValueTypeValues`).
 
 - Prefer async/await syntax over .then()/.catch()
 - Prefer using the `function` keyword to define functions rather than using arrow functions or `const` function expressions.

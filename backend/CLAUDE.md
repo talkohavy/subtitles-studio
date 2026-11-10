@@ -8,17 +8,15 @@ Before making any code changes (edits, new files, or refactors), read ai-agent-d
 
 `ai-agent-docs/code-quality-standards.md`
 
-## 2. Project Knowledge Base
+## 2. Architecture
 
-Project knowledge base is found in all the md files under:
+How the server is put together (startup order, plugins, modules, the transcription and translation job queues, errors, config) is in:
 
-`ai-agent-docs/knowledge/`
-
-These files explain the `lucky-server` framework (app factory, plugins, modules) with examples from the original template: Books/Users/Dragons modules, Postgres/Redis/Socket.IO plugins, and micro-services. This project uses only part of it: the entry point is `src/start-server.ts`, `src/buildApp.ts` registers the config, call-context, logger and HTTP-server plugins, and the modules are `transcription`, `health-check` and `static-frontend`.
+`ai-agent-docs/ARCHITECTURE.md`
 
 ## 3. What this project is
 
-The transcription server of Subtitles Studio (package manager: `pnpm`). It transcribes uploaded WAV audio with Whisper running locally (Transformers.js in a forked worker process) and returns word-level timestamps. In production it also serves the built frontend. See [README.md](./README.md).
+The transcription and translation server of Subtitles Studio (package manager: `pnpm`). It transcribes uploaded WAV audio with Whisper and returns word-level timestamps, and translates subtitle texts with NLLB-200. Both run locally with Transformers.js, each in its own forked worker process. The modules are `transcription`, `translation`, `health-check` and `static-frontend`. In production it also serves the built frontend. See [README.md](./README.md).
 
 ## 4. How to run project locally
 
@@ -28,7 +26,7 @@ No database or other service is needed. Just run:
 pnpm dev
 ```
 
-The first transcription with each Whisper model downloads it into `storage/models`.
+The first transcription with each Whisper model, and the first translation, download the model into `storage/models`.
 
 ## 5. Commands
 

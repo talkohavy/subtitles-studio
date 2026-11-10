@@ -10,11 +10,7 @@ The web app of Subtitles Studio: it generates subtitles from a video's audio (tr
 
 Code quality standard are found under: [code-quality-standards.md](./ai-docs/code-quality-standards.md)
 
-## 3. Project Knowledge Base
-
-Project knowledge base is found in all the md files under: `./ai-docs/knowledge/`
-
-## 4. Commands
+## 3. Commands
 
 ```bash
 pnpm dev                       # vite dev server (--host), port 3004 (override via VITE_PORT); proxies /api to the backend
