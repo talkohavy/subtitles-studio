@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { TriangleAlert } from 'lucide-react';
 import { AUTO_DETECT_LANGUAGE } from '@src/lib/api/types';
 import { SelectField, type SelectOption } from '../../components/ui/SelectField';
@@ -5,6 +6,7 @@ import { useAppDispatch, useAppSelector } from '../../store';
 import { selectSettings } from '../../store/selectors';
 import { settingsChanged } from '../../store/slices/settings.slice';
 import { getLanguageOptions } from './languages';
+import { getUnlistedTranscriptionSettings } from './unlistedSettings';
 import { useTranscriptionOptions } from './useTranscriptionOptions';
 
 const AUTO_DETECT_OPTION: SelectOption<string> = { value: AUTO_DETECT_LANGUAGE, label: 'Auto Detect' };
@@ -19,6 +21,14 @@ export function TranscriptionFields(props: { disabled?: boolean }) {
   const dispatch = useAppDispatch();
   const { language, modelId } = useAppSelector(selectSettings);
   const { options, error } = useTranscriptionOptions();
+
+  useEffect(() => {
+    if (!options) return;
+
+    const resets = getUnlistedTranscriptionSettings({ language, modelId, options });
+
+    if (resets) dispatch(settingsChanged(resets));
+  }, [options, language, modelId, dispatch]);
 
   const languageOptions = [AUTO_DETECT_OPTION, ...getLanguageOptions(options?.languages ?? [])];
   const isLanguageListed = languageOptions.some((option) => option.value === language);

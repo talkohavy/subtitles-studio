@@ -1,9 +1,11 @@
+import { useEffect } from 'react';
 import { SelectField, type SelectOption } from '../../components/ui/SelectField';
 import { useAppDispatch, useAppSelector } from '../../store';
 import { selectSettings } from '../../store/selectors';
 import { settingsChanged } from '../../store/slices/settings.slice';
 import { useTranslationOptions } from '../translation/useTranslationOptions';
 import { getLanguageOptions } from './languages';
+import { getUnlistedTranslationSettings } from './unlistedSettings';
 
 const NO_TRANSLATION = 'none';
 const NO_TRANSLATION_OPTION: SelectOption<string> = { value: NO_TRANSLATION, label: 'Don’t translate' };
@@ -17,6 +19,14 @@ export function TranslateToField(props: { disabled?: boolean }) {
   const dispatch = useAppDispatch();
   const { translationLanguage } = useAppSelector(selectSettings);
   const { options } = useTranslationOptions();
+
+  useEffect(() => {
+    if (!options) return;
+
+    const resets = getUnlistedTranslationSettings({ translationLanguage, options });
+
+    if (resets) dispatch(settingsChanged(resets));
+  }, [options, translationLanguage, dispatch]);
 
   // Until the languages load, the remembered one is offered on its own, so the field doesn't flicker.
   const languageCodes = options?.languages ?? (translationLanguage ? [translationLanguage] : []);
