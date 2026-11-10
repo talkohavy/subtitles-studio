@@ -65,6 +65,7 @@ export function Timeline(props: TimelineProps) {
   const previousPxPerSecRef = useRef(pxPerSec);
   const [scrollLeft, setScrollLeft] = useState(0);
 
+  const isRendered = durationSec > 0 && viewportWidth > 0;
   const activeCueIndex = usePlayerState((state) => findCueIndexAtTime({ cues, time: state.currentTime }));
   const contentWidth = Math.max(viewportWidth, durationSec * pxPerSec + TIMELINE_END_PADDING_PX);
   const visibleStart = (scrollLeft - RENDER_MARGIN_PX) / pxPerSec;
@@ -149,7 +150,7 @@ export function Timeline(props: TimelineProps) {
     scroller.addEventListener('wheel', handleWheel, { passive: false });
 
     return () => scroller.removeEventListener('wheel', handleWheel);
-  }, []);
+  }, [isRendered]);
 
   const revealSelectedCue = useEffectEvent((cueId: string) => {
     const scroller = scrollRef.current;
@@ -200,7 +201,7 @@ export function Timeline(props: TimelineProps) {
     dispatch(addCueAtTime(getTimeAtPointer(event)));
   }
 
-  if (durationSec <= 0 || viewportWidth <= 0) {
+  if (!isRendered) {
     return <div style={{ height: TIMELINE_LAYOUT.height }} className='border-t border-zinc-900' />;
   }
 

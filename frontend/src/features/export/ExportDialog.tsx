@@ -207,18 +207,18 @@ function ExportDialogContent(props: ExportDialogContentProps) {
       <div className='space-y-5'>
         <div className='flex gap-2.5 rounded-lg bg-amber-500/10 p-3 text-sm text-amber-200'>
           <CircleExclamationPoint className='mt-0.5 size-4 shrink-0' />
-          
+
           <p>
             {exportState.message} To keep the sound, convert the video’s audio to AAC first (e.g. with HandBrake or
             ffmpeg).
           </p>
         </div>
-        
+
         <div className='flex justify-end gap-2'>
           <Button variant='ghost' size='sm' onClick={() => setExportState(IDLE_STATE)}>
             Cancel
           </Button>
-          
+
           <Button variant='primary' size='sm' onClick={() => startExport(true)}>
             <Download className='size-4' />
             Export without sound
@@ -263,20 +263,20 @@ function ExportDialogContent(props: ExportDialogContentProps) {
           {exportState.error}
         </div>
       )}
-      
+
       <dl className='grid grid-cols-3 gap-3'>
         <SummaryItem label='Size' value={outputSize ? `${outputSize.width}×${outputSize.height}` : '—'} />
         <SummaryItem label='Length' value={video ? formatTime(video.durationSec) : '—'} />
         <SummaryItem label='Subtitles' value={String(cues.length)} />
       </dl>
-      
+
       <SegmentedControl
         label='Quality'
         value={exportQuality}
         options={QUALITY_OPTIONS}
         onChange={(value) => dispatch(settingsChanged({ exportQuality: value }))}
       />
-      
+
       <div className='flex justify-end'>
         <Button variant='primary' onClick={() => void startExport(false)}>
           <Download className='size-4' />
