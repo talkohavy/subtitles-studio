@@ -158,7 +158,7 @@ function toCaptionTokens(props: ToCaptionTokensProps): Array<CaptionToken> {
     .filter((token) => token.text.length > 0);
 }
 
-function applyTextTransform(props: { text: string; style: SubtitleStyle; language: string | null }): string {
+export function applyTextTransform(props: { text: string; style: SubtitleStyle; language: string | null }): string {
   const { text, style, language } = props;
 
   const locale = language ?? undefined;

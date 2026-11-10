@@ -11,6 +11,7 @@ import {
   type InputTrack,
   type Quality,
 } from 'mediabunny';
+import { getFontSampleText } from '@src/lib/fonts/getFontSampleText';
 import { loadFont } from '@src/lib/fonts/loadFont';
 import { computeOutputSize } from '@src/lib/renderer/geometry';
 import { renderFrame } from '@src/lib/renderer/renderFrame';
@@ -97,8 +98,8 @@ export async function exportVideo(props: ExportVideoProps): Promise<ExportResult
       throw new MediaError(`Your browser can’t encode a ${width}×${height} video. Try a smaller canvas size.`);
     }
 
-    const captionText = cues.map((cue) => cue.text).join(' ');
-    await loadFont({ fontId: style.fontId, weight: style.fontWeight, text: captionText.slice(0, 10_000) });
+    const fontSampleText = getFontSampleText({ cues, style, language });
+    await loadFont({ fontId: style.fontId, weight: style.fontWeight, text: fontSampleText });
 
     const canvas = new OffscreenCanvas(width, height);
     const ctx = canvas.getContext('2d');

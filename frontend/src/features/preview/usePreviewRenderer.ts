@@ -1,4 +1,5 @@
 import { useEffect, useEffectEvent, useLayoutEffect, useRef, type RefObject } from 'react';
+import { getFontSampleText } from '@src/lib/fonts/getFontSampleText';
 import { loadFont } from '@src/lib/fonts/loadFont';
 import { player } from '@src/lib/player/playerController';
 import { renderFrame, type DrawSource } from '@src/lib/renderer/renderFrame';
@@ -13,11 +14,6 @@ export type PreviewFrameState = {
   sourceWidth: number;
   sourceHeight: number;
 };
-
-/**
- * Enough of the transcript to make the browser download every character subset the captions need.
- */
-const FONT_SAMPLE_LENGTH = 4000;
 
 type UsePreviewRendererProps = {
   canvasRef: RefObject<HTMLCanvasElement | null>;
@@ -57,11 +53,9 @@ export function usePreviewRenderer(props: UsePreviewRendererProps): RefObject<Re
     };
   }, []);
 
-  const { fontId, fontWeight } = frameState.style;
-  const fontSample = frameState.cues
-    .map((cue) => cue.text)
-    .join(' ')
-    .slice(0, FONT_SAMPLE_LENGTH);
+  const { cues, style, language } = frameState;
+  const { fontId, fontWeight } = style;
+  const fontSample = getFontSampleText({ cues, style, language });
 
   useEffect(() => {
     let isCurrent = true;
