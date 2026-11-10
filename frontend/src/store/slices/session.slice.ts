@@ -38,21 +38,18 @@ export type TranscriptionProgress = Pick<
   | 'language'
   | 'languageProbability'
   | 'modelId'
-  | 'device'
   | 'queuePosition'
   | 'modelDownload'
-  | 'wordsTotal'
 >;
 
 export type TranslationProgress = Pick<
   TranslationJob,
-  'id' | 'status' | 'stage' | 'progress' | 'queuePosition' | 'modelDownload' | 'textsTotal' | 'translatedCount'
+  'id' | 'status' | 'stage' | 'progress' | 'queuePosition' | 'modelDownload'
 >;
 
 export type SessionState = {
   phase: SessionPhaseValues;
   fileName: string | null;
-  fileSize: number;
   video: VideoInfo | null;
   /**
    * Progress of the current phase, from 0 to 1.
@@ -64,12 +61,7 @@ export type SessionState = {
    */
   transcriptPreview: string;
   error: string | null;
-  /**
-   * The audio is already extracted, so only the transcription has to run again.
-   */
-  canRetry: boolean;
   requestedLanguage: string;
-  requestedModelId: string | null;
   /**
    * The language the subtitles are translated into as part of the processing, if any.
    */
@@ -84,7 +76,6 @@ export type SessionState = {
 
 type SessionStartedPayload = {
   fileName: string;
-  fileSize: number;
   /**
    * Set when the subtitles come from this file instead of a transcription.
    */
@@ -95,15 +86,12 @@ type SessionStartedPayload = {
 const initialState: SessionState = {
   phase: SessionPhases.Idle,
   fileName: null,
-  fileSize: 0,
   video: null,
   phaseProgress: 0,
   transcription: null,
   transcriptPreview: '',
   error: null,
-  canRetry: false,
   requestedLanguage: 'auto',
-  requestedModelId: null,
   translationLanguage: null,
   task: ProcessingTasks.Transcribe,
   subtitlesFileName: null,
@@ -115,18 +103,16 @@ const sessionSlice = createSlice({
   initialState,
   reducers: {
     sessionStarted(state, action: PayloadAction<SessionStartedPayload>) {
-      const { fileName, fileSize, subtitlesFileName, translationLanguage } = action.payload;
+      const { fileName, subtitlesFileName, translationLanguage } = action.payload;
 
       return {
         ...initialState,
         phase: SessionPhases.Probing,
         fileName,
-        fileSize,
         task: subtitlesFileName ? ProcessingTasks.AddSubtitlesFile : ProcessingTasks.Transcribe,
         subtitlesFileName,
         translationLanguage,
         requestedLanguage: state.requestedLanguage,
-        requestedModelId: state.requestedModelId,
       };
     },
 
@@ -134,12 +120,8 @@ const sessionSlice = createSlice({
       state.video = action.payload;
     },
 
-    transcriptionRequested(
-      state,
-      action: PayloadAction<{ language: string; modelId: string | null; translationLanguage: string | null }>,
-    ) {
+    transcriptionRequested(state, action: PayloadAction<{ language: string; translationLanguage: string | null }>) {
       state.requestedLanguage = action.payload.language;
-      state.requestedModelId = action.payload.modelId;
       state.translationLanguage = action.payload.translationLanguage;
       state.task = ProcessingTasks.Transcribe;
       state.transcription = null;
@@ -180,14 +162,13 @@ const sessionSlice = createSlice({
       state.error = null;
     },
 
-    sessionFailed(state, action: PayloadAction<{ error: string; canRetry: boolean }>) {
+    sessionFailed(state, action: PayloadAction<{ error: string }>) {
       state.phase = SessionPhases.Failed;
       state.error = action.payload.error;
-      state.canRetry = action.payload.canRetry;
     },
 
     sessionCleared(state) {
-      return { ...initialState, requestedLanguage: state.requestedLanguage, requestedModelId: state.requestedModelId };
+      return { ...initialState, requestedLanguage: state.requestedLanguage };
     },
   },
 });

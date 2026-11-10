@@ -87,7 +87,7 @@ function ProcessingStepRow(props: { step: ProcessingStep }) {
           <span className={cn(isDone || isActive ? 'text-zinc-100' : 'text-zinc-500')}>{step.label}</span>
           {step.detail && <span className='truncate text-xs text-zinc-400'>{step.detail}</span>}
         </div>
-        {isActive && step.progress !== null && <ProgressBar progress={step.progress} />}
+        {isActive && <ProgressBar progress={step.progress} />}
       </div>
     </li>
   );

@@ -20,10 +20,8 @@ function makeTranscription(props: Partial<TranscriptionProgress>): Transcription
     language: null,
     languageProbability: null,
     modelId: 'small',
-    device: null,
     queuePosition: null,
     modelDownload: null,
-    wordsTotal: 0,
     ...props,
   };
 
@@ -34,15 +32,12 @@ function makeSession(props: Partial<SessionState>): SessionState {
   const session: SessionState = {
     phase: SessionPhases.Transcribing,
     fileName: 'clip.mp4',
-    fileSize: 1000,
     video: { width: 1280, height: 720, durationSec: 83.2, hasAudio: true },
     phaseProgress: 0,
     transcription: null,
     transcriptPreview: '',
     error: null,
-    canRetry: false,
     requestedLanguage: AUTO_DETECT_LANGUAGE,
-    requestedModelId: null,
     translationLanguage: null,
     task: ProcessingTasks.Transcribe,
     subtitlesFileName: null,
@@ -61,8 +56,6 @@ function makeTranslation(props: Partial<TranslationProgress>): TranslationProgre
     progress: 0,
     queuePosition: null,
     modelDownload: null,
-    textsTotal: 10,
-    translatedCount: 0,
     ...props,
   };
 

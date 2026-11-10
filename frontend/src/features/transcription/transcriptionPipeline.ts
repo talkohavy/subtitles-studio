@@ -70,7 +70,7 @@ export function openVideo(props: OpenVideoProps): AppThunk<Promise<void>> {
     mediaStore.setFile(file);
     dispatch(projectCleared());
     dispatch(cueSelected(null));
-    dispatch(sessionStarted({ fileName: file.name, fileSize: file.size, subtitlesFileName, translationLanguage }));
+    dispatch(sessionStarted({ fileName: file.name, subtitlesFileName, translationLanguage }));
 
     try {
       const videoInfo = await probeVideo(file);
@@ -188,7 +188,7 @@ async function runTranscription(props: RunTranscriptionProps): Promise<void> {
   const { signal } = run.controller;
   const { language, modelId, translationLanguage } = getState().settings;
 
-  dispatch(transcriptionRequested({ language, modelId, translationLanguage }));
+  dispatch(transcriptionRequested({ language, translationLanguage }));
   await ensureAudio({ run, dispatch });
 
   const { wav, audioOffsetSec } = mediaStore.getSnapshot();
@@ -278,10 +278,8 @@ function toTranscriptionProgress(job: TranscriptionJob): TranscriptionProgress {
     language: job.language,
     languageProbability: job.languageProbability,
     modelId: job.modelId,
-    device: job.device,
     queuePosition: job.queuePosition,
     modelDownload: job.modelDownload,
-    wordsTotal: job.wordsTotal,
   };
 }
 
@@ -346,8 +344,7 @@ function handleRunError(props: { run: ProcessingRun; error: unknown; dispatch: A
   run.cancelServerJob?.();
   finishRun(run);
 
-  const canRetry = mediaStore.getSnapshot().wav !== null;
-  dispatch(sessionFailed({ error: getErrorMessage(error), canRetry }));
+  dispatch(sessionFailed({ error: getErrorMessage(error) }));
 }
 
 /**

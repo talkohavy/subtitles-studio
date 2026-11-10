@@ -155,7 +155,5 @@ function toTranslationProgress(job: TranslationJob): TranslationProgress {
     progress: job.progress,
     queuePosition: job.queuePosition,
     modelDownload: job.modelDownload,
-    textsTotal: job.textsTotal,
-    translatedCount: job.translatedCount,
   };
 }
