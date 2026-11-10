@@ -4,6 +4,7 @@ import { downloadBlob, getBaseFileName } from '@src/common/utils/downloadBlob';
 import { formatTime } from '@src/common/utils/formatTime';
 import { getErrorMessage, isAbortError } from '@src/common/utils/getErrorMessage';
 import { ExportQualities, type ExportQualityValues } from '@src/lib/media/constants';
+import { openExportDestination, type ExportResult } from '@src/lib/media/exportDestination';
 import { exportVideo } from '@src/lib/media/exportVideo';
 import { AudioNotExportableError } from '@src/lib/media/media-error';
 import { mediaStore } from '@src/lib/media/mediaStore';
@@ -40,7 +41,7 @@ type ExportState =
   | { status: 'idle' }
   | { status: 'confirmingNoAudio'; message: string }
   | { status: 'exporting'; progress: number; elapsedSec: number }
-  | { status: 'done'; blob: Blob; fileName: string; elapsedSec: number }
+  | { status: 'done'; result: ExportResult; fileName: string; elapsedSec: number }
   | { status: 'failed'; error: string };
 
 const IDLE_STATE: ExportState = { status: 'idle' };
@@ -111,6 +112,15 @@ function ExportDialogContent(props: ExportDialogContentProps) {
 
     if (!file) return;
 
+    const outputFileName = `${getBaseFileName(fileName ?? 'video')}-subtitled.mp4`;
+    const destination = await openExportDestination({ suggestedName: outputFileName }).catch((error: unknown) => {
+      if (!isAbortError(error)) setExportState({ status: 'failed', error: getErrorMessage(error) });
+
+      return null;
+    });
+
+    if (!destination) return;
+
     const controller = new AbortController();
     controllerRef.current = controller;
     const startedAt = performance.now();
@@ -132,7 +142,7 @@ function ExportDialogContent(props: ExportDialogContentProps) {
     }
 
     try {
-      const blob = await exportVideo({
+      const result = await exportVideo({
         file,
         cues,
         style,
@@ -140,15 +150,17 @@ function ExportDialogContent(props: ExportDialogContentProps) {
         language,
         quality: exportQuality,
         allowDroppingAudio,
+        destination,
         onProgress: handleProgress,
         signal: controller.signal,
       });
-      const outputFileName = `${getBaseFileName(fileName ?? 'video')}-subtitled.mp4`;
-      downloadBlob({ blob, fileName: outputFileName });
+
+      if (result.type === 'download') downloadBlob({ blob: result.blob, fileName: outputFileName });
+
       setExportState({
         status: 'done',
-        blob,
-        fileName: outputFileName,
+        result,
+        fileName: result.type === 'file' ? result.fileName : outputFileName,
         elapsedSec: (performance.now() - startedAt) / 1000,
       });
     } catch (error) {
@@ -229,16 +241,19 @@ function ExportDialogContent(props: ExportDialogContentProps) {
   }
 
   if (exportState.status === 'done') {
-    const { blob, fileName: outputFileName, elapsedSec } = exportState;
+    const { result, fileName: outputFileName, elapsedSec } = exportState;
+    const size = result.type === 'download' ? result.blob.size : result.size;
 
     return (
       <div className='space-y-5'>
         <div className='flex gap-3'>
           <CircleCheck className='size-6 shrink-0 text-emerald-400' />
           <div className='min-w-0 space-y-1'>
-            <p className='text-sm font-medium text-zinc-100'>Your video is ready</p>
+            <p className='text-sm font-medium text-zinc-100'>
+              {result.type === 'file' ? 'Your video is saved' : 'Your video is ready'}
+            </p>
             <p className='truncate text-xs text-zinc-500'>
-              {outputFileName} · {formatFileSize(blob.size)} · made in {formatDuration(elapsedSec)}
+              {outputFileName} · {formatFileSize(size)} · made in {formatDuration(elapsedSec)}
             </p>
           </div>
         </div>
@@ -246,10 +261,16 @@ function ExportDialogContent(props: ExportDialogContentProps) {
           <Button variant='ghost' size='sm' onClick={onClose}>
             Close
           </Button>
-          <Button variant='primary' size='sm' onClick={() => downloadBlob({ blob, fileName: outputFileName })}>
-            <Download className='size-4' />
-            Download again
-          </Button>
+          {result.type === 'download' && (
+            <Button
+              variant='primary'
+              size='sm'
+              onClick={() => downloadBlob({ blob: result.blob, fileName: outputFileName })}
+            >
+              <Download className='size-4' />
+              Download again
+            </Button>
+          )}
         </div>
       </div>
     );

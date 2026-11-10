@@ -1,5 +1,4 @@
 import {
-  BufferTarget,
   canEncodeAudio,
   Conversion,
   getFirstEncodableVideoCodec,
@@ -19,6 +18,7 @@ import { ExportQualities, type ExportQualityValues } from './constants';
 import { runCancellable } from './extractAudio';
 import { AudioNotExportableError, MediaError } from './media-error';
 import { openInput } from './openInput';
+import type { ExportDestination, ExportResult } from './exportDestination';
 import type { CanvasSettings, SubtitleStyle } from '@src/lib/renderer/types';
 import type { Cue } from '@src/lib/subtitles/types';
 
@@ -34,6 +34,7 @@ type ExportVideoProps = {
    * instead of throwing `AudioNotExportableError`.
    */
   allowDroppingAudio: boolean;
+  destination: ExportDestination;
   /**
    * Called with a number from 0 to 1.
    */
@@ -45,6 +46,13 @@ type ExportVideoProps = {
  * Every AAC encoder supports these; audio at other rates is resampled to one of them.
  */
 const AAC_SAMPLE_RATES = [48_000, 44_100];
+/**
+ * Before this much is encoded, the final size can't be told from the size so far.
+ */
+const MIN_PROGRESS_FOR_SIZE_ESTIMATE = 0.05;
+const TOO_LARGE_FOR_MEMORY_MESSAGE =
+  'This video would be larger than 4 GB, which is more than your browser can hold. Choose Standard quality or a ' +
+  'smaller canvas size, or export in Chrome or Edge, which save straight to a file.';
 
 /**
  * Re-encodes the video with the captions drawn into every frame, entirely in the browser. AAC audio is copied as is;
@@ -53,8 +61,9 @@ const AAC_SAMPLE_RATES = [48_000, 44_100];
  * @throws {AudioNotExportableError} before encoding anything, when the audio would be dropped and
  * `allowDroppingAudio` is off.
  */
-export async function exportVideo(props: ExportVideoProps): Promise<Blob> {
-  const { file, cues, style, canvasSettings, language, quality, allowDroppingAudio, onProgress, signal } = props;
+export async function exportVideo(props: ExportVideoProps): Promise<ExportResult> {
+  const { file, cues, style, canvasSettings, language, quality, allowDroppingAudio, destination, onProgress, signal } =
+    props;
 
   const input = openInput(file);
 
@@ -96,8 +105,9 @@ export async function exportVideo(props: ExportVideoProps): Promise<Blob> {
 
     if (!ctx) throw new MediaError('Your browser can’t draw the video frames.');
 
-    const target = new BufferTarget();
-    const output = new Output({ format: new Mp4OutputFormat({ fastStart: 'in-memory' }), target });
+    // Without fast start, the video is written as it's encoded (its index goes at the end), instead of being held in
+    // memory until the end.
+    const output = new Output({ format: new Mp4OutputFormat({ fastStart: false }), target: destination.target });
     const conversion = await Conversion.init({
       input,
       output,
@@ -147,13 +157,33 @@ export async function exportVideo(props: ExportVideoProps): Promise<Blob> {
       );
     }
 
-    conversion.onProgress = (progress) => onProgress(progress);
+    const { maxBytes } = destination;
+    const sizeLimit = new AbortController();
+    let writtenBytes = 0;
+    const stopCountingBytes = destination.target.on('write', ({ end }) => {
+      writtenBytes = Math.max(writtenBytes, end);
+    });
 
-    await runCancellable({ conversion, signal });
+    conversion.onProgress = (progress) => {
+      onProgress(progress);
 
-    if (!target.buffer) throw new MediaError('The export didn’t produce a video.');
+      if (maxBytes !== null && isOverSizeLimit({ writtenBytes, progress, maxBytes })) {
+        sizeLimit.abort(new MediaError(TOO_LARGE_FOR_MEMORY_MESSAGE));
+      }
+    };
 
-    return new Blob([target.buffer], { type: 'video/mp4' });
+    try {
+      await runCancellable({ conversion, signal: AbortSignal.any([signal, sizeLimit.signal]) });
+    } finally {
+      stopCountingBytes();
+    }
+
+    const result = await destination.finish();
+
+    return result;
+  } catch (error) {
+    await destination.discard();
+    throw error;
   } finally {
     input.dispose();
   }
@@ -189,4 +219,28 @@ async function getAudioOptions(props: GetAudioOptionsProps): Promise<ConversionA
     : undefined;
 
   return audioOptions;
+}
+
+type IsOverSizeLimitProps = {
+  writtenBytes: number;
+  /**
+   * From 0 to 1.
+   */
+  progress: number;
+  maxBytes: number;
+};
+
+/**
+ * Whether the video already is, or is on track to end up, larger than `maxBytes`.
+ */
+export function isOverSizeLimit(props: IsOverSizeLimitProps): boolean {
+  const { writtenBytes, progress, maxBytes } = props;
+
+  if (writtenBytes > maxBytes) return true;
+
+  if (progress < MIN_PROGRESS_FOR_SIZE_ESTIMATE) return false;
+
+  const estimatedBytes = writtenBytes / progress;
+
+  return estimatedBytes > maxBytes;
 }
