@@ -91,12 +91,6 @@ export function openVideo(props: OpenVideoProps): AppThunk<Promise<void>> {
         return;
       }
 
-      dispatch(phaseChanged(SessionPhases.ExtractingAudio));
-      const onProgress = createProgressReporter(dispatch);
-      const { wav, offsetSec } = await extractAudio({ file, onProgress, signal });
-      const waveform = computeWaveformPeaks({ wav, peaksPerSecond: WAVEFORM_PEAKS_PER_SECOND });
-      mediaStore.setAudio({ wav, audioOffsetSec: offsetSec, waveform });
-
       await runTranscription({ run, dispatch, getState });
     } catch (error) {
       handleRunError({ run, error, dispatch });
@@ -105,20 +99,14 @@ export function openVideo(props: OpenVideoProps): AppThunk<Promise<void>> {
 }
 
 /**
- * Transcribes the open video again, e.g. with a different model or language. Replaces the current subtitles.
+ * Transcribes the open video again, e.g. with a different model or language. Replaces the current subtitles once
+ * the new ones are ready, so canceling or failing keeps them.
  */
 export function retranscribe(props: { language: string; modelId: string | null }): AppThunk<Promise<void>> {
   const { language, modelId } = props;
 
   return async function retranscribeThunk(dispatch, getState) {
-    const { file, wav } = mediaStore.getSnapshot();
-
     dispatch(settingsChanged({ language, modelId }));
-
-    if (!wav) {
-      if (file) await dispatch(openVideo({ file, subtitles: null }));
-      return;
-    }
 
     const run = startRun();
     player.pause();
@@ -191,19 +179,22 @@ type RunTranscriptionProps = {
 };
 
 /**
- * Transcribes the extracted audio into subtitles, then translates them when the settings ask for it.
+ * Transcribes the video's audio into subtitles (extracting it first when needed), then translates them when the
+ * settings ask for it.
  */
 async function runTranscription(props: RunTranscriptionProps): Promise<void> {
   const { run, dispatch, getState } = props;
 
   const { signal } = run.controller;
+  const { language, modelId, translationLanguage } = getState().settings;
+
+  dispatch(transcriptionRequested({ language, modelId, translationLanguage }));
+  await ensureAudio({ run, dispatch });
+
   const { wav, audioOffsetSec } = mediaStore.getSnapshot();
 
   if (!wav) throw new MediaError('The audio is missing. Open the video again.');
 
-  const { language, modelId, translationLanguage } = getState().settings;
-
-  dispatch(transcriptionRequested({ language, modelId, translationLanguage }));
   dispatch(phaseChanged(SessionPhases.Uploading));
 
   const onUploadProgress = createProgressReporter(dispatch);
@@ -295,11 +286,17 @@ function toTranscriptionProgress(job: TranscriptionJob): TranscriptionProgress {
 }
 
 /**
- * Extracts the audio just to draw the timeline's waveform. Stops when another video is opened, and failing only
- * means there's no waveform.
+ * Stops the audio extraction of `loadWaveformInBackground`, while there is one.
+ */
+let backgroundAudioController: AbortController | null = null;
+
+/**
+ * Extracts the audio just to draw the timeline's waveform. Stops when another video is opened, or when a
+ * transcription extracts the audio itself. Failing only means there's no waveform.
  */
 function loadWaveformInBackground(file: File) {
   const controller = new AbortController();
+  backgroundAudioController = controller;
   const unsubscribe = mediaStore.subscribe(() => {
     if (mediaStore.getSnapshot().file !== file) controller.abort();
   });
@@ -312,7 +309,33 @@ function loadWaveformInBackground(file: File) {
       mediaStore.setAudio({ wav, audioOffsetSec: offsetSec, waveform });
     })
     .catch(() => {})
-    .finally(unsubscribe);
+    .finally(() => {
+      unsubscribe();
+
+      if (backgroundAudioController === controller) backgroundAudioController = null;
+    });
+}
+
+/**
+ * Extracts the open video's audio, unless that was done already.
+ */
+async function ensureAudio(props: { run: ProcessingRun; dispatch: AppDispatch }): Promise<void> {
+  const { run, dispatch } = props;
+
+  const { file, wav } = mediaStore.getSnapshot();
+
+  if (wav) return;
+
+  if (!file) throw new MediaError('The video is missing. Open it again.');
+
+  backgroundAudioController?.abort();
+  dispatch(phaseChanged(SessionPhases.ExtractingAudio));
+
+  const onProgress = createProgressReporter(dispatch);
+  const { wav: extractedWav, offsetSec } = await extractAudio({ file, onProgress, signal: run.controller.signal });
+  run.controller.signal.throwIfAborted();
+  const waveform = computeWaveformPeaks({ wav: extractedWav, peaksPerSecond: WAVEFORM_PEAKS_PER_SECOND });
+  mediaStore.setAudio({ wav: extractedWav, audioOffsetSec: offsetSec, waveform });
 }
 
 function handleRunError(props: { run: ProcessingRun; error: unknown; dispatch: AppDispatch }) {
