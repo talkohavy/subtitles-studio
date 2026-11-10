@@ -17,12 +17,15 @@ export function selectLanguage(state: RootState) {
   return state.project.present.language;
 }
 
+/**
+ * Not while processing: it would bring back subtitles that the processing then overwrites.
+ */
 export function selectCanUndo(state: RootState) {
-  return state.project.past.length > 0;
+  return selectIsEditable(state) && state.project.past.length > 0;
 }
 
 export function selectCanRedo(state: RootState) {
-  return state.project.future.length > 0;
+  return selectIsEditable(state) && state.project.future.length > 0;
 }
 
 export function selectSession(state: RootState) {

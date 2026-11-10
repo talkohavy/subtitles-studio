@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { player } from '@src/lib/player/playerController';
 import { useAppDispatch } from '../../store';
-import { redo, undo } from '../../store/undoable';
+import { redoChange, undoChange } from '../history/historyThunks';
 import { seekToNextCue, seekToPreviousCue } from '../subtitles/cueThunks';
 
 const TEXT_INPUT_TYPES = new Set(['', 'text', 'search', 'email', 'number', 'password', 'tel', 'url']);
@@ -57,7 +57,7 @@ export function useKeyboardShortcuts() {
         if (!usesAppUndo(event.target) || isInsideDialog(event.target)) return;
 
         event.preventDefault();
-        dispatch(key === 'y' || event.shiftKey ? redo() : undo());
+        dispatch(key === 'y' || event.shiftKey ? redoChange() : undoChange());
         return;
       }
 

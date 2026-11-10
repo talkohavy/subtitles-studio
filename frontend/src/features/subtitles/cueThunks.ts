@@ -11,7 +11,7 @@ import {
   cueSplit,
 } from '../../store/slices/project.slice';
 import { cueFocusRequested, cueSelected } from '../../store/slices/ui.slice';
-import { undo } from '../../store/undoable';
+import { undoNotifiedChange } from '../history/historyThunks';
 import type { AppThunk } from '../../store';
 
 /**
@@ -85,9 +85,11 @@ export function deleteCue(cueId: string): AppThunk {
 
     if (getState().ui.selectedCueId === cueId) dispatch(cueSelected(null));
 
+    const changedProject = getState().project.present;
+
     toast('Subtitle deleted', {
       description: cue.text.length > 60 ? `${cue.text.slice(0, 60)}…` : cue.text,
-      action: { label: 'Undo', onClick: () => dispatch(undo()) },
+      action: { label: 'Undo', onClick: () => dispatch(undoNotifiedChange({ changedProject })) },
     });
   };
 }

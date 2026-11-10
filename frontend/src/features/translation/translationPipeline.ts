@@ -13,7 +13,7 @@ import {
   translationRequested,
   type TranslationProgress,
 } from '../../store/slices/session.slice';
-import { undo } from '../../store/undoable';
+import { undoNotifiedChange } from '../history/historyThunks';
 import { getLanguageName } from '../new-video/languages';
 import { pollJob } from '../processing/pollJob';
 import { finishRun, startRun, type ProcessingRun } from '../processing/processingRun';
@@ -140,9 +140,10 @@ async function runTranslation(props: RunTranslationProps): Promise<void> {
 
   const translatedCues = applyTranslations({ cues, units, translations, language: targetLanguage });
   dispatch(cuesTranslated({ cues: translatedCues, language: targetLanguage }));
+  const changedProject = getState().project.present;
 
   toast.success(`Translated the subtitles to ${getLanguageName(targetLanguage)}.`, {
-    action: { label: 'Undo', onClick: () => dispatch(undo()) },
+    action: { label: 'Undo', onClick: () => dispatch(undoNotifiedChange({ changedProject })) },
   });
 }
 

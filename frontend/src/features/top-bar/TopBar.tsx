@@ -4,7 +4,7 @@ import { Button, IconButton } from '../../components/ui/Button';
 import { useAppDispatch, useAppSelector } from '../../store';
 import { selectCanRedo, selectCanUndo, selectSession } from '../../store/selectors';
 import { newVideoDialogToggled } from '../../store/slices/ui.slice';
-import { redo, undo } from '../../store/undoable';
+import { redoChange, undoChange } from '../history/historyThunks';
 import { ExportMenu } from './ExportMenu';
 import { Logo } from './Logo';
 
@@ -34,7 +34,7 @@ export function TopBar() {
           tooltipSide='bottom'
           icon={<Undo2 className='size-4' />}
           disabled={!canUndo}
-          onClick={() => dispatch(undo())}
+          onClick={() => dispatch(undoChange())}
         />
         <IconButton
           label='Redo'
@@ -42,7 +42,7 @@ export function TopBar() {
           tooltipSide='bottom'
           icon={<Redo2 className='size-4' />}
           disabled={!canRedo}
-          onClick={() => dispatch(redo())}
+          onClick={() => dispatch(redoChange())}
         />
         <div className='mx-2 h-6 w-px bg-zinc-800' />
         <ExportMenu />

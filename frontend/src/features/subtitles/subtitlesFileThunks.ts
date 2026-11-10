@@ -6,7 +6,7 @@ import { readSubtitlesFile, type SubtitlesFile } from '@src/lib/subtitles/import
 import { cuesImported, projectLoaded } from '../../store/slices/project.slice';
 import { sessionReady } from '../../store/slices/session.slice';
 import { cueSelected } from '../../store/slices/ui.slice';
-import { undo } from '../../store/undoable';
+import { undoNotifiedChange } from '../history/historyThunks';
 import { getLanguageName } from '../new-video/languages';
 import { finishRun, type ProcessingRun } from '../processing/processingRun';
 import { translateNewSubtitles, translateSubtitles } from '../translation/translationPipeline';
@@ -73,8 +73,9 @@ export function replaceSubtitles(props: ReplaceSubtitlesProps): AppThunk<Promise
 
     dispatch(cuesImported({ cues, language }));
     dispatch(cueSelected(null));
+    const changedProject = getState().project.present;
     toast.success(`Added ${formatCount({ count: cues.length, noun: 'subtitle' })} from “${fileName}”.`, {
-      action: { label: 'Undo', onClick: () => dispatch(undo()) },
+      action: { label: 'Undo', onClick: () => dispatch(undoNotifiedChange({ changedProject })) },
     });
 
     if (!translationLanguage || !language) return;
