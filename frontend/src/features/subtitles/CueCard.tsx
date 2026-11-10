@@ -8,7 +8,7 @@ import { IconButton } from '../../components/ui/Button';
 import { useAppDispatch, useAppSelector } from '../../store';
 import { selectMediaDuration } from '../../store/selectors';
 import { cueTextChanged, cueTimingChanged } from '../../store/slices/project.slice';
-import { cueSelected } from '../../store/slices/ui.slice';
+import { cueFocusHandled, cueSelected } from '../../store/slices/ui.slice';
 import { deleteCue, insertCueAfter, mergeCueWithNext, splitCueAt } from './cueThunks';
 import { TimeInput } from './TimeInput';
 import type { Cue } from '@src/lib/subtitles/types';
@@ -53,7 +53,9 @@ export function CueCard(props: CueCardProps) {
     } else {
       textarea.setSelectionRange(textarea.value.length, textarea.value.length);
     }
-  }, [focusNonce]);
+
+    dispatch(cueFocusHandled(focusNonce));
+  }, [focusNonce, dispatch]);
 
   useLayoutEffect(() => {
     const textarea = textareaRef.current;

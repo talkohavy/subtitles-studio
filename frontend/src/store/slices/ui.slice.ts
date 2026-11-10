@@ -57,6 +57,13 @@ const uiSlice = createSlice({
       state.focusRequest = { cueId: action.payload, nonce: (state.focusRequest?.nonce ?? 0) + 1 };
     },
 
+    /**
+     * Ends the request with this nonce, so the caption doesn't take the focus again when the panel opens again.
+     */
+    cueFocusHandled(state, action: PayloadAction<number>) {
+      if (state.focusRequest?.nonce === action.payload) state.focusRequest = null;
+    },
+
     timelineZoomChanged(state, action: PayloadAction<number | null>) {
       state.timelineZoom = action.payload;
     },
@@ -75,6 +82,7 @@ export const {
   panelOpened,
   cueSelected,
   cueFocusRequested,
+  cueFocusHandled,
   timelineZoomChanged,
   newVideoDialogToggled,
   exportDialogToggled,
