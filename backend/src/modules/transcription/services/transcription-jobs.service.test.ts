@@ -47,6 +47,7 @@ async function waitUntil(condition: () => Promise<boolean>) {
 describe('TranscriptionJobsService', () => {
   let service: TranscriptionJobsService;
   let workers: Array<TranscriptionFakeWorker>;
+  let logger: ReturnType<typeof createLoggerMock>;
 
   function createJob(props: { id: string; audioPath?: string }) {
     const { id, audioPath = `/uploads/${id}.wav` } = props;
@@ -56,9 +57,10 @@ describe('TranscriptionJobsService', () => {
 
   beforeEach(() => {
     workers = [];
+    logger = createLoggerMock();
     service = new TranscriptionJobsService({
       config: CONFIG,
-      logger: createLoggerMock(),
+      logger,
       spawnWorker: () => {
         const worker: TranscriptionFakeWorker = new FakeWorker();
         workers.push(worker);
@@ -266,6 +268,30 @@ describe('TranscriptionJobsService', () => {
 
     workers[0]?.emitEvent({ type: 'completed', jobId: 'job-1' });
     await waitUntil(async () => !(await doesFileExist(audioPath)));
+    const actualResult = await doesFileExist(audioPath);
+    await rm(tempDir, { recursive: true, force: true });
+
+    expect(actualResult).toBe(false);
+  });
+
+  it('should cancel the active job without reporting an error when the server shuts down', async () => {
+    createJob({ id: 'job-1' });
+
+    await service.shutdown();
+    const job = service.getJob('job-1')!;
+    const actualResult = { status: job.status, error: job.error, errorLogCount: logger.error.mock.calls.length };
+
+    const expectedResult = { status: 'canceled', error: null, errorLogCount: 0 };
+    expect(actualResult).toEqual(expectedResult);
+  });
+
+  it('should delete the audio of the active job before shutdown resolves', async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), 'jobs-service-'));
+    const audioPath = path.join(tempDir, 'job-1.wav');
+    await writeFile(audioPath, 'audio');
+    createJob({ id: 'job-1', audioPath });
+
+    await service.shutdown();
     const actualResult = await doesFileExist(audioPath);
     await rm(tempDir, { recursive: true, force: true });
 

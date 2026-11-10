@@ -142,10 +142,12 @@ export abstract class WorkerJobQueue<TJob extends WorkerJob, TRequest, TEvent ex
     clearInterval(this.sweepTimer);
     this.clearCancelTimer();
     this.clearIdleTimer();
-    this.stopWorker();
 
     const pendingJobs = [...this.jobs.values()].filter((job) => !FINISHED_JOB_STATUSES.includes(job.status));
-    const unreleasedJobs = this.activeJob ? [...pendingJobs, this.activeJob] : pendingJobs;
+    const unreleasedJobs =
+      this.activeJob && !pendingJobs.includes(this.activeJob) ? [...pendingJobs, this.activeJob] : pendingJobs;
+
+    this.stopWorker();
 
     await Promise.all(unreleasedJobs.map((job) => this.releaseJob(job)));
   }
@@ -270,7 +272,7 @@ export abstract class WorkerJobQueue<TJob extends WorkerJob, TRequest, TEvent ex
 
     if (!job) return;
 
-    const wasCanceled = !this.jobs.has(job.id);
+    const wasCanceled = !this.jobs.has(job.id) || this.isShuttingDown;
 
     if (wasCanceled) return void this.finishActiveJob({ status: JobStatuses.Canceled });
 
