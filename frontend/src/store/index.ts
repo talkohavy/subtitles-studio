@@ -46,16 +46,10 @@ function createBrowserStore() {
     },
   });
 
-  let lastSaved = { settings: initialSettingsState, style: DEFAULT_SUBTITLE_STYLE, canvas: DEFAULT_CANVAS_SETTINGS };
-
   browserStore.subscribe(() => {
     const { settings, project } = browserStore.getState();
     const { style, canvas } = project.present;
-    const hasChanges = settings !== lastSaved.settings || style !== lastSaved.style || canvas !== lastSaved.canvas;
 
-    if (!hasChanges) return;
-
-    lastSaved = { settings, style, canvas };
     savePersistedState({ settings, style, canvas });
   });
 
