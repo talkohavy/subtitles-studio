@@ -21,7 +21,7 @@
   },
   "diffEditor.renderGutterMenu": true, // <--- should show the two action buttons (revert & stage)
   "diffEditor.ignoreTrimWhitespace": false,
-  "biome.enabled": false,
+  "biome.enabled": false, // <--- this repo is linted & formatted by Vite+ (Oxc). Keeps a globally-installed Biome extension out of it.
   // "diffEditor.codeLens": false, // <--- defaults to "false"
   // "diffEditor.renderSideBySide": true, // <--- defaults to "true"
 
@@ -39,11 +39,10 @@
   "editor.gotoLocation.multipleDefinitions": "goto", // <--- I FOUND IT!!!! No more peeking !!! default value was peek
   "editor.gotoLocation.multipleReferences": "peek", // <--- I FOUND IT!!!! When a reference was mis-spelled, it couldn't perform the goto operation, so it gets stuck in the same place.
   "editor.codeActionsOnSave": {
-    "source.fixAll.oxc": "explicit",
-    "source.fixAll.eslint": "explicit"
+    "source.fixAll.oxc": "explicit"
     // "source.fixAll.biome": "explicit",
     // "source.fixAll": true,
-    // "source.organizeImports": true, // <--- This also removes unused imports. I disabled it, since I'm already using eslint for that.
+    // "source.organizeImports": true, // <--- This also removes unused imports. I disabled it, since `vp fmt` already sorts imports.
     // "source.organizeImports.biome": "always",
   },
   // "editor.autoSurround": "languageDefined", // defaults to "languageDefined". Defines what to do when text is selected, and you hit ' or [.
@@ -435,6 +434,16 @@
   "debug.console.acceptSuggestionOnEnter": "on", // finally!!! This drove me mad!!! defaults to off.
   "debug.closeReadonlyTabsOnEnd": true, // <--- defaults to false. When attached to a debugger, there can be internal or virtual source files that don't exist on-disk, which are opened as readonly. This new setting causes VS Code to automatically close any opened readonly files from the debug session when the session ends.
 
+  // ---------------------------
+  // Vite+ (Oxc) Formatter Rules:
+  // ---------------------------
+  // Language-specific overrides beat the workspace-level `editor.defaultFormatter`, so without these a user-level
+  // `[typescript]` Prettier setting would silently take over in this repo.
+  "[javascript]": { "editor.defaultFormatter": "oxc.oxc-vscode" },
+  "[javascriptreact]": { "editor.defaultFormatter": "oxc.oxc-vscode" },
+  "[typescript]": { "editor.defaultFormatter": "oxc.oxc-vscode" },
+  "[typescriptreact]": { "editor.defaultFormatter": "oxc.oxc-vscode" },
+
   // -----------
   // JSON Rules:
   // -----------
@@ -471,24 +480,6 @@
     }
   },
   "go.formatTool": "default", // <--- "default" (gofmt) | "gofmt" | "gofumpt" | "goimports". gofumpt & goimports need to be `go install`ed first.
-
-  // -------------
-  // Eslint Rules:
-  // -------------
-  // "prettier.configPath": ".prettierrc.js",
-  // Enable eslint for all supported languages
-  "eslint.validate": [
-    "javascript",
-    "javascriptreact",
-    "typescript",
-    "typescriptreact",
-    "vue",
-    "json"
-    // "html", // <--- commented out because svg files are treated as html and eslint can't handle that.
-    // "jsonc" // <--- commented out because it errored the eslintrc config file
-    // "yaml" // <--- works badly on yamls
-    // "markdown" // <--- works badly on markdowns
-  ],
 
   "json.schemaDownload.enable": true, // <--- Allows the IDE to download the JSON schemas.
 

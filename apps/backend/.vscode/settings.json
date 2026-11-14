@@ -1,8 +1,0 @@
-{
-  "editor.defaultFormatter": "biomejs.biome",
-  "[jsonc]": {
-    "editor.quickSuggestions": { "strings": "on" },
-    "editor.suggest.insertMode": "replace", // defaults to insert
-    "editor.defaultFormatter": "esbenp.prettier-vscode" // biomejs.biome or esbenp.prettier-vscode
-  }
-}
