@@ -181,7 +181,7 @@ importers:
 
   .: {}
 
-  backend:
+  apps/backend:
     dependencies:
       '@huggingface/transformers':
         specifier: 4.3.2
@@ -263,7 +263,7 @@ importers:
         specifier: ^8.71.2
         version: 8.72.1(eslint@10.14.0(jiti@2.7.0)(supports-color@8.1.1))(supports-color@8.1.1)(typescript@6.0.3)
 
-  frontend:
+  apps/frontend:
     dependencies:
       '@fontsource-variable/inter':
         specifier: ^5.3.0
@@ -5285,6 +5285,7 @@ packages:
 
   tldts-core@7.4.20:
     resolution: {integrity: sha512-C630TWXZCZmLq0F2bW4QqwnaaxCQ/svpAqvJwnC4JvgEM5ohhBnGsEzTLSOXcN+xjz+kEaHS5uoWIw2klnqd0A==}
+    deprecated: Partial release, see https://github.com/remusao/tldts/issues/2735. Use >=7.4.22.
 
   tldts@7.4.19:
     resolution: {integrity: sha512-48dH6aSpQnpbzDUc4vIQZ1VjB8tkK+e8c1yx05/SZK+rkssgjEOlxDd/yU8/a4vGYQ9vRgJr9dwMq9TJ0b3X2Q==}

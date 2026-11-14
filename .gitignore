@@ -10,4 +10,4 @@
 .spike
 
 # Backend runtime data: uploaded audio and downloaded Whisper models
-backend/storage
+apps/backend/storage
