@@ -25,5 +25,5 @@ allowBuilds:
   protobufjs: false
   sharp: false
 
-patchedDependencies:
-  mediabunny@1.65.2: patches/mediabunny@1.65.2.patch
+minimumReleaseAgeExclude:
+  - mediabunny@1.66.0
