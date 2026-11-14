@@ -1,6 +1,8 @@
 ---
 description: TypeScript type style — prefer type aliases over the interface keyword; derive literal union types from `as const` objects.
-alwaysApply: true
+globs:
+  - "apps/backend/**"
+alwaysApply: false
 ---
 
 - Avoid `interface` keyword and prefer using `type` for types

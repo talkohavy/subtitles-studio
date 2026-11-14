@@ -1,6 +1,6 @@
 ---
 name: how-to-create-a-module
-description: How to create a module in this project. Use when asked to add, create, or scaffold a module or domain feature.
+description: How to create a module in the backend (apps/backend). Use when asked to add, create, or scaffold a module or domain feature.
 ---
 
 1. Either choose a meaningful name or you were already given a name, and create a new folder under `src/modules/[module-name]`.

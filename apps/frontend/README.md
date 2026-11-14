@@ -36,10 +36,9 @@ pnpm preview                 # serve the production build
 pnpm test                    # Vitest, once (vp test run)
 pnpm test src/lib/subtitles  # run the tests of one folder or file
 pnpm tsc                     # type-check
-pnpm lint                    # Oxlint (vp lint)
-pnpm format:fix              # Oxfmt (vp fmt . --write)
-pnpm check                   # lint + format check + tsc + test (run before committing)
 ```
+
+Linting (Oxlint), formatting (Oxfmt) and `pnpm check` (run before committing) run from the repo root, for both apps at once.
 
 ## Project Structure
 

@@ -1,6 +1,6 @@
 ---
 name: how-to-create-a-server
-description: How to create a server in this project. Use when asked to add, create, or scaffold a new server entry point or micro-service.
+description: How to create a server in the backend (apps/backend). Use when asked to add, create, or scaffold a new server entry point or micro-service.
 ---
 
 A server is always a pair of files: `initServer.ts` and `buildApp.ts`.

@@ -20,8 +20,6 @@ pnpm test                      # vitest via `vp test run` (jsdom)
 pnpm test path/to/file.test.ts # run a single test file (no `--`; pnpm forwards it to vitest)
 pnpm test -t "name"            # run tests matching a name
 pnpm tsc                       # tsc -p tsconfig.json (no emit)
-pnpm lint                      # oxlint via `vp lint` (config in vite.config.ts `lint` block)
-pnpm lint:fix                  # vp lint --fix
-pnpm format:fix                # oxfmt via `vp fmt . --write`
-pnpm check                     # lint + format check + tsc check + test (run before considering work done)
 ```
+
+Linting, formatting and `pnpm check` (run before considering work done) are repo-wide and run from the root; see the root [AGENTS.md](../../AGENTS.md). Their config is in the root `vite.config.ts`.

@@ -1,8 +1,8 @@
 ---
 description: Express bootstrap — initServer.ts vs buildApp.ts, AppFactory, plugin vs module registration order.
 globs:
-  - "**/initServer.ts"
-  - "**/buildApp.ts"
+  - "apps/backend/**/initServer.ts"
+  - "apps/backend/**/buildApp.ts"
 alwaysApply: false
 ---
 

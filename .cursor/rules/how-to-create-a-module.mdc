@@ -1,8 +1,8 @@
 ---
 description: Domain modules under src/modules — ModuleFactory, empty constructor, async init, services getter, folder layout.
 globs:
-  - "**/*.module.ts"
-  - "**/src/modules/**/*.ts"
+  - "apps/backend/**/*.module.ts"
+  - "apps/backend/src/modules/**/*.ts"
 alwaysApply: false
 ---
 

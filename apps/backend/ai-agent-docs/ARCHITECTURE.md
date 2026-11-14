@@ -48,6 +48,8 @@ Both features are asynchronous jobs that the client creates, polls, and may dele
 2. **Poll.** `GET .../:id` returns the job's status (`queued` → `processing` → `completed` | `failed` | `canceled`), stage, progress and results so far. Transcriptions take `wordsFrom` to return only the words the client doesn't have yet.
 3. **Delete.** `DELETE .../:id` removes the job, and cancels it if it's running.
 
+The response shapes (`TranscriptionJobDto`, `TranslationJobDto`, the options DTOs), the job statuses and the stages are the API contract with the frontend, so they live in `@subtitles-studio/shared` (`packages/shared`), which both apps import. A module's `types.ts` holds only its server-side types.
+
 The job machinery is shared: `src/lib/worker-job-queue/WorkerJobQueue` owns the queue and **one child process** per feature, forked with `child_process.fork` (through `tsx` in development, a separate bundled file in production). Inference blocks the event loop for seconds and uses every CPU core, so jobs run one at a time, off the HTTP process, and a crashing native runtime can't take the server down.
 
 - `TranscriptionJobsService` and `TranslationJobsService` extend it. They say how a job starts on the worker (`createStartRequest`), how progress events update it (`applyProgressEvent`), and what to free when it ends (`releaseJob`, e.g. deleting the uploaded audio).

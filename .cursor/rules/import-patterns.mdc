@@ -1,6 +1,8 @@
 ---
 description: Import path rules — relative imports by default, @src/ absolute imports; @src/ required for src/common and src/lib.
-alwaysApply: true
+globs:
+  - "apps/backend/**"
+alwaysApply: false
 ---
 
 - Generally, use relative imports.

@@ -1,7 +1,7 @@
 ---
 description: Module services — class-based services, naming, placement under src/modules/[name]/services, dependency injection.
 globs:
-  - "**/*.service.ts"
+  - "apps/backend/**/*.service.ts"
 alwaysApply: false
 ---
 

@@ -33,9 +33,9 @@ The first transcription with each Whisper model, and the first translation, down
 ```bash
 pnpm dev                  # run the server (watch mode) -> src/start-server.ts
 pnpm build                # build the project (build.config.mjs)
-pnpm test                 # run jest tests
-pnpm run lint             # eslint
-pnpm run lint:fix         # eslint --fix
+pnpm test                 # vitest via `vp test run`
+pnpm run test:cov         # tests with coverage
 pnpm run tsc              # type-check (tsc -p tsconfig.json)
-pnpm run check            # lint + biome lint + biome format + tsc + test (run before finishing a change / opening a PR)
 ```
+
+Linting, formatting and `pnpm check` (run before finishing a change / opening a PR) are repo-wide and run from the root; see the root [AGENTS.md](../../AGENTS.md). Their config is in the root `vite.config.ts`.

@@ -6,7 +6,7 @@ The transcription and translation server of Subtitles Studio. It receives a vide
 
 - **Express 5** with the `lucky-server` app framework from the express-server template (plugins, middleware, modules)
 - **[Transformers.js](https://huggingface.co/docs/transformers.js)** (`@huggingface/transformers`), running Whisper ONNX models on the CPU or the GPU (WebGPU), and NLLB-200 on the CPU
-- **TypeScript**, **Jest**, **ESLint**, **Biome**, **Prettier**, **pnpm**
+- **TypeScript**, **Vitest**, **pnpm**; linted and formatted by **Vite+** (Oxlint and Oxfmt) from the repo root
 
 ## Getting Started
 
@@ -23,14 +23,12 @@ No database or other service is needed. To change a setting, copy `.env.example`
 pnpm dev                  # run the server in watch mode (src/start-server.ts)
 pnpm build                # bundle into dist/ (build.config.mjs)
 pnpm start                # run the bundle
-pnpm test                 # jest
+pnpm test                 # vitest
+pnpm run test:cov         # vitest with coverage
 pnpm run tsc              # type-check
-pnpm run lint             # eslint
-pnpm run lint:biome       # biome lint
-pnpm run format           # biome format check (format:fix writes)
-pnpm run format:prettier  # prettier check (format:prettier:fix writes)
-pnpm run check            # lint + biome lint + format + tsc + test
 ```
+
+Linting, formatting and `pnpm check` run from the repo root, for both apps at once.
 
 ## API
 

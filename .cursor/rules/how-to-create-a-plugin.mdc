@@ -1,8 +1,8 @@
 ---
 description: Express plugins under src/plugins — naming, Application augmentation, registerPlugins order, when to use a plugin vs a module.
 globs:
-  - "**/src/plugins/**/*.ts"
-  - "**/*.plugin.ts"
+  - "apps/backend/src/plugins/**/*.ts"
+  - "apps/backend/**/*.plugin.ts"
 alwaysApply: false
 ---
 

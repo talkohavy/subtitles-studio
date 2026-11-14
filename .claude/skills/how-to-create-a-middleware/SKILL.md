@@ -1,6 +1,6 @@
 ---
 name: how-to-create-a-middleware
-description: How to create a middleware in this project. Use when asked to add, create, or scaffold a middleware — global or module-specific.
+description: How to create a middleware in the backend (apps/backend). Use when asked to add, create, or scaffold a middleware — global or module-specific.
 ---
 
 There are two types of middleware: global and module-specific.

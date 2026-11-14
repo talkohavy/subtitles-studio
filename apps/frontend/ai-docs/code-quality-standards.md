@@ -26,8 +26,7 @@
 
 ## C. Code Formatting
 
-- Run `pnpm run format:biome:fix` to fix formatting issues
-- Run `pnpm run lint:fix` to fix linting issues
+- Run `pnpm check:fix` from the repo root to fix formatting and linting issues
 - Run `pnpm run build` to verify the build process works
 
 ## D. Imports

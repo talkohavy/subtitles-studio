@@ -15,7 +15,8 @@
     "format": "vp fmt --check",
     "format:fix": "vp fmt --write",
     "tsc": "pnpm --recursive run tsc",
-    "check": "pnpm run lint && pnpm run format && pnpm --recursive run check",
+    "check": "vp check && pnpm run tsc && pnpm run test",
+    "check:fix": "vp check --fix",
     "clean": "rm -rf node_modules apps/*/node_modules packages/*/node_modules"
   },
   "devDependencies": {

@@ -1,7 +1,7 @@
 ---
 description: HTTP and WebSocket middleware — global registrars vs module MiddlewareFactory classes, naming, placement.
 globs:
-  - "**/*.middleware.ts"
+  - "apps/backend/**/*.middleware.ts"
 alwaysApply: false
 ---
 

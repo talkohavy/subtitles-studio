@@ -1,6 +1,6 @@
 ---
 name: how-to-create-a-controller
-description: How to create a controller in this project. Use when asked to add, create, or scaffold a controller.
+description: How to create a controller in the backend (apps/backend). Use when asked to add, create, or scaffold a controller.
 ---
 
 # Create a controller

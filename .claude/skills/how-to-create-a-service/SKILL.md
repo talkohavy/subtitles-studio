@@ -1,6 +1,6 @@
 ---
 name: how-to-create-a-service
-description: How to create a service in this project. Use when asked to add, create, or scaffold a service.
+description: How to create a service in the backend (apps/backend). Use when asked to add, create, or scaffold a service.
 ---
 
 1. Create a file named `[name].service.ts` inside its module's services folder: `src/modules/[module-name]/services/`.

@@ -22,7 +22,7 @@
   export type DimensionValueTypeValues = (typeof DimensionValueTypes)[keyof typeof DimensionValueTypes];
   ```
 
-  See `JobStatuses` in `src/lib/worker-job-queue/logic/constants.ts` for a reference example in the codebase.
+  See `JobStatuses` in `packages/shared/src/jobs.ts` for a reference example in the codebase.
 
   Naming convention: the object is named in **plural** form (e.g. `JobStatuses`, `DimensionValueTypes`), and the derived type is named in the **singular** form of the object name plus a `Values` suffix (e.g. `JobStatusValues`, `DimensionValueTypeValues`).
 
@@ -49,8 +49,7 @@
 
 ## C. Code Formatting
 
-- Run `pnpm run format:biome:fix` to fix formatting issues
-- Run `pnpm run lint:fix` to fix linting issues
+- Run `pnpm check:fix` from the repo root to fix formatting and linting issues
 - Run `pnpm run build` to verify the build process works
 
 ## D. Imports

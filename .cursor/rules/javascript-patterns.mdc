@@ -1,6 +1,8 @@
 ---
 description: JavaScript and general TS style for this repo (async/await, function keyword, single props object, no direct promise returns).
-alwaysApply: true
+globs:
+  - "apps/backend/**"
+alwaysApply: false
 ---
 
 - Prefer async/await syntax over .then()/.catch()

@@ -10,8 +10,7 @@
     "start": "node --env-file-if-exists=.env dist/index.js",
     "tsc": "tsc -p tsconfig.json",
     "test": "vp test run",
-    "test:cov": "vp test run --coverage",
-    "check": "pnpm run tsc && pnpm run test"
+    "test:cov": "vp test run --coverage"
   },
   "license": "ISC",
   "dependencies": {

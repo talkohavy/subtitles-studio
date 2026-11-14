@@ -1,6 +1,6 @@
 ---
 name: how-to-create-a-plugin
-description: How to create a plugin in this project. Use when asked to add, create, or scaffold a plugin or attach a core service to the app.
+description: How to create a plugin in the backend (apps/backend). Use when asked to add, create, or scaffold a plugin or attach a core service to the app.
 ---
 
 1. Create a file named `[name].plugin.ts` under `src/plugins/`.
