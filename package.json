@@ -15,6 +15,10 @@
     "check": "pnpm --recursive run check",
     "clean": "rm -rf node_modules apps/*/node_modules packages/*/node_modules"
   },
+  "devDependencies": {
+    "@types/node": "^26.6.5",
+    "typescript": "^6.0.3"
+  },
   "engines": {
     "node": ">=22.12.0"
   },

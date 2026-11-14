@@ -1,0 +1,11 @@
+// The repo's main tsconfig: type-checks the root-level config files. Each project under apps/ and packages/ has its
+// own tsconfig.json, and all of them extend tsconfig.base.json.
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ESNext"],
+    "module": "preserve",
+    "types": ["node"]
+  },
+  "files": []
+}
