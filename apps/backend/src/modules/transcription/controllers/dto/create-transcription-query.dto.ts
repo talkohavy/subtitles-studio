@@ -1,5 +1,6 @@
+import { AUTO_DETECT_LANGUAGE } from '@subtitles-studio/shared';
 import Joi from 'joi';
-import { AUTO_DETECT_LANGUAGE, WHISPER_LANGUAGE_CODES, WhisperModelIds } from '../../logic/constants';
+import { WHISPER_LANGUAGE_CODES, WhisperModelIds } from '../../logic/constants';
 
 export const createTranscriptionQuerySchema = Joi.object({
   language: Joi.string()

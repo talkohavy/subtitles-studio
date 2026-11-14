@@ -1,10 +1,6 @@
-import type { ModelDownloadProgress } from '@src/common/types';
+import type { ModelDownloadProgress, TranslationStageValues } from '@subtitles-studio/shared';
 import type { WorkerCancelRequest, WorkerJob, WorkerLifecycleEvent, WorkerProcess } from '@src/lib/worker-job-queue';
-import type {
-  TranslationStageValues,
-  TranslationWorkerEventTypes,
-  TranslationWorkerRequestTypes,
-} from './logic/constants';
+import type { TranslationWorkerEventTypes, TranslationWorkerRequestTypes } from './logic/constants';
 
 export type TranslationModelDefinition = {
   name: string;
@@ -39,32 +35,6 @@ export type TranslationJob = WorkerJob & {
    */
   progress: number;
   modelDownload: ModelDownloadProgress | null;
-};
-
-export type TranslationJobDto = Omit<TranslationJob, 'texts' | 'translations'> & {
-  /**
-   * Position among the jobs waiting for the worker (1 = next). `null` once processing started.
-   */
-  queuePosition: number | null;
-  textsTotal: number;
-  translatedCount: number;
-  /**
-   * The translations from index `translationsFrom` onward (one per text, in order), so pollers only fetch what's new.
-   */
-  translations: Array<string>;
-  translationsFrom: number;
-};
-
-export type TranslationOptionsDto = {
-  model: {
-    name: string;
-    approximateSizeMb: number;
-    isDownloaded: boolean;
-  };
-  /**
-   * The language codes a translation can be requested from and to.
-   */
-  languages: ReadonlyArray<string>;
 };
 
 export type TranslateTask = {

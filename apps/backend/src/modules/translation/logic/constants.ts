@@ -128,17 +128,6 @@ export const TRANSLATION_LANGUAGE_CODES: ReadonlyArray<string> = Object.keys(NLL
 export const MAX_TEXTS_PER_TRANSLATION = 5000;
 export const MAX_TEXT_LENGTH = 2000;
 
-export const TranslationStages = {
-  Waiting: 'waiting',
-  LoadingModel: 'loading-model',
-  Translating: 'translating',
-  Done: 'done',
-} as const;
-
-type TypeOfTranslationStages = typeof TranslationStages;
-export type TranslationStageKeys = keyof TypeOfTranslationStages;
-export type TranslationStageValues = TypeOfTranslationStages[TranslationStageKeys];
-
 /**
  * Besides the requests every worker understands (see `WorkerJobRequestTypes`).
  */

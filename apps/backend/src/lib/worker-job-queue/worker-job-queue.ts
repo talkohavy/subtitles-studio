@@ -1,12 +1,11 @@
+import { JobStatuses, type JobStatusValues } from '@subtitles-studio/shared';
 import {
   CANCEL_GRACE_PERIOD_MS,
   EXPIRED_JOBS_SWEEP_INTERVAL_MS,
   FINISHED_JOB_STATUSES,
-  JobStatuses,
   WORKER_IDLE_TIMEOUT_MS,
   WorkerJobEventTypes,
   WorkerJobRequestTypes,
-  type JobStatusValues,
 } from './logic/constants';
 import type {
   WorkerCancelRequest,

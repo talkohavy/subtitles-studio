@@ -1,7 +1,7 @@
 import { rm } from 'fs/promises';
-import { JobStatuses, WorkerJobQueue, type WorkerJobQueueLogger } from '@src/lib/worker-job-queue';
+import { JobStatuses, TranscriptionStages } from '@subtitles-studio/shared';
+import { WorkerJobQueue, type WorkerJobQueueLogger } from '@src/lib/worker-job-queue';
 import {
-  TranscriptionStage,
   TranscriptionWorkerEventTypes,
   TranscriptionWorkerRequestTypes,
   WHISPER_MODELS,
@@ -60,7 +60,7 @@ export class TranscriptionJobsService extends WorkerJobQueue<
     const job: TranscriptionJob = {
       id,
       status: JobStatuses.Queued,
-      stage: TranscriptionStage.Waiting,
+      stage: TranscriptionStages.Waiting,
       modelId,
       requestedLanguage: language,
       language: null,
@@ -128,7 +128,7 @@ export class TranscriptionJobsService extends WorkerJobQueue<
   }
 
   protected onJobFinished(job: TranscriptionJob) {
-    job.stage = TranscriptionStage.Done;
+    job.stage = TranscriptionStages.Done;
 
     if (job.status === JobStatuses.Completed) job.progress = 1;
   }

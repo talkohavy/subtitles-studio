@@ -1,8 +1,12 @@
+import {
+  AUTO_DETECT_LANGUAGE,
+  type TranscriptionOptionsDto,
+  type TranslationOptionsDto,
+} from '@subtitles-studio/shared';
 import { describe, expect, it } from 'vite-plus/test';
-import { AUTO_DETECT_LANGUAGE, type TranscriptionOptions, type TranslationOptions } from '@src/lib/api/types';
 import { getUnlistedTranscriptionSettings, getUnlistedTranslationSettings } from './unlistedSettings';
 
-const TRANSCRIPTION_OPTIONS: TranscriptionOptions = {
+const TRANSCRIPTION_OPTIONS: TranscriptionOptionsDto = {
   defaultModelId: 'small',
   maxUploadBytes: 1000,
   models: [
@@ -12,7 +16,7 @@ const TRANSCRIPTION_OPTIONS: TranscriptionOptions = {
   languages: ['en', 'he'],
 };
 
-const TRANSLATION_OPTIONS: TranslationOptions = {
+const TRANSLATION_OPTIONS: TranslationOptionsDto = {
   model: { name: 'NLLB', approximateSizeMb: 600, isDownloaded: true },
   languages: ['en', 'he', 'ja'],
 };

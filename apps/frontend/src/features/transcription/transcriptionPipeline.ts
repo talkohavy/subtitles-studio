@@ -30,7 +30,7 @@ import { pollJob } from '../processing/pollJob';
 import { finishRun, startRun, stopActiveRun, type ProcessingRun } from '../processing/processingRun';
 import { addSubtitlesFile } from '../subtitles/subtitlesFileThunks';
 import { translateNewSubtitles } from '../translation/translationPipeline';
-import type { TranscriptionJob } from '@src/lib/api/types';
+import type { TranscriptionJobDto } from '@subtitles-studio/shared';
 import type { CaptionLengthValues } from '@src/lib/subtitles/constants';
 import type { SubtitlesFile } from '@src/lib/subtitles/import/readSubtitlesFile';
 import type { Word } from '@src/lib/subtitles/types';
@@ -231,7 +231,7 @@ async function runTranscription(props: RunTranscriptionProps): Promise<void> {
 }
 
 type PollTranscriptionProps = {
-  createdJob: TranscriptionJob;
+  createdJob: TranscriptionJobDto;
   run: ProcessingRun;
   dispatch: AppDispatch;
   /**
@@ -245,7 +245,7 @@ type PollTranscriptionProps = {
  */
 async function pollTranscription(
   props: PollTranscriptionProps,
-): Promise<{ words: Array<Word>; job: TranscriptionJob }> {
+): Promise<{ words: Array<Word>; job: TranscriptionJobDto }> {
   const { createdJob, run, dispatch, audioOffsetSec } = props;
 
   const { signal } = run.controller;
@@ -269,7 +269,7 @@ async function pollTranscription(
   return { words, job };
 }
 
-function toTranscriptionProgress(job: TranscriptionJob): TranscriptionProgress {
+function toTranscriptionProgress(job: TranscriptionJobDto): TranscriptionProgress {
   return {
     id: job.id,
     status: job.status,

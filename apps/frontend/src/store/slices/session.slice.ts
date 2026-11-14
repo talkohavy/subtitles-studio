@@ -1,5 +1,5 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
-import { AUTO_DETECT_LANGUAGE, type TranscriptionJob, type TranslationJob } from '@src/lib/api/types';
+import { AUTO_DETECT_LANGUAGE, type TranscriptionJobDto, type TranslationJobDto } from '@subtitles-studio/shared';
 import type { VideoInfo } from '@src/lib/media/probeVideo';
 
 export const SessionPhases = {
@@ -30,7 +30,7 @@ export const ProcessingTasks = {
 export type ProcessingTaskValues = (typeof ProcessingTasks)[keyof typeof ProcessingTasks];
 
 export type TranscriptionProgress = Pick<
-  TranscriptionJob,
+  TranscriptionJobDto,
   | 'id'
   | 'status'
   | 'stage'
@@ -43,7 +43,7 @@ export type TranscriptionProgress = Pick<
 >;
 
 export type TranslationProgress = Pick<
-  TranslationJob,
+  TranslationJobDto,
   'id' | 'status' | 'stage' | 'progress' | 'queuePosition' | 'modelDownload'
 >;
 

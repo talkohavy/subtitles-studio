@@ -1,5 +1,5 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
-import { AUTO_DETECT_LANGUAGE } from '@src/lib/api/types';
+import { AUTO_DETECT_LANGUAGE } from '@subtitles-studio/shared';
 import { ExportQualities, type ExportQualityValues } from '@src/lib/media/constants';
 import { CaptionLengths, type CaptionLengthValues } from '@src/lib/subtitles/constants';
 

@@ -17,7 +17,7 @@ import { undoNotifiedChange } from '../history/historyThunks';
 import { getLanguageName } from '../new-video/languages';
 import { pollJob } from '../processing/pollJob';
 import { finishRun, startRun, type ProcessingRun } from '../processing/processingRun';
-import type { TranslationJob } from '@src/lib/api/types';
+import type { TranslationJobDto } from '@subtitles-studio/shared';
 import type { AppDispatch, AppThunk, RootState } from '../../store';
 
 /**
@@ -156,7 +156,7 @@ async function runTranslation(props: RunTranslationProps): Promise<void> {
   });
 }
 
-function toTranslationProgress(job: TranslationJob): TranslationProgress {
+function toTranslationProgress(job: TranslationJobDto): TranslationProgress {
   return {
     id: job.id,
     status: job.status,

@@ -1,10 +1,14 @@
-import { AUTO_DETECT_LANGUAGE, type TranscriptionOptions, type TranslationOptions } from '@src/lib/api/types';
+import {
+  AUTO_DETECT_LANGUAGE,
+  type TranscriptionOptionsDto,
+  type TranslationOptionsDto,
+} from '@subtitles-studio/shared';
 import type { SettingsState } from '../../store/slices/settings.slice';
 
 type GetUnlistedTranscriptionSettingsProps = {
   language: string;
   modelId: string | null;
-  options: TranscriptionOptions;
+  options: TranscriptionOptionsDto;
 };
 
 /**
@@ -28,7 +32,7 @@ export function getUnlistedTranscriptionSettings(
 
 type GetUnlistedTranslationSettingsProps = {
   translationLanguage: string | null;
-  options: TranslationOptions;
+  options: TranslationOptionsDto;
 };
 
 /**

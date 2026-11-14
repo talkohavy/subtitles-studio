@@ -1,14 +1,4 @@
-export const JobStatuses = {
-  Queued: 'queued',
-  Processing: 'processing',
-  Completed: 'completed',
-  Failed: 'failed',
-  Canceled: 'canceled',
-} as const;
-
-type TypeOfJobStatuses = typeof JobStatuses;
-export type JobStatusKeys = keyof TypeOfJobStatuses;
-export type JobStatusValues = TypeOfJobStatuses[JobStatusKeys];
+import { JobStatuses, type JobStatusValues } from '@subtitles-studio/shared';
 
 export const FINISHED_JOB_STATUSES: ReadonlyArray<JobStatusValues> = [
   JobStatuses.Completed,

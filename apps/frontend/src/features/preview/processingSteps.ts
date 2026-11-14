@@ -1,10 +1,10 @@
-import { formatTime } from '@src/common/utils/formatTime';
 import {
   AUTO_DETECT_LANGUAGE,
   TranscriptionStages,
   TranslationStages,
   type ModelDownloadProgress,
-} from '@src/lib/api/types';
+} from '@subtitles-studio/shared';
+import { formatTime } from '@src/common/utils/formatTime';
 import { ProcessingTasks, SessionPhases, type SessionState } from '../../store/slices/session.slice';
 
 export const ProcessingStepStatuses = {

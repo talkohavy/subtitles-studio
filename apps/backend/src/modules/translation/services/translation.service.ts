@@ -3,8 +3,9 @@ import path from 'path';
 import { doesFileExist } from '@src/common/utils/doesFileExist';
 import { NotFoundError, TooManyRequestsError } from '@src/core/errors';
 import { TRANSLATION_LANGUAGE_CODES, TRANSLATION_MODEL } from '../logic/constants';
+import type { TranslationJobDto, TranslationOptionsDto } from '@subtitles-studio/shared';
 import type { TranslationConfig } from '@src/plugins/config-service';
-import type { TranslationJob, TranslationJobDto, TranslationOptionsDto } from '../types';
+import type { TranslationJob } from '../types';
 import type { TranslationJobsService } from './translation-jobs.service';
 
 type TranslationServiceProps = {

@@ -1,7 +1,7 @@
 export { WorkerJobQueue } from './worker-job-queue';
 
 // constants
-export { JobStatuses, WorkerJobEventTypes, WorkerJobRequestTypes } from './logic/constants';
+export { WorkerJobEventTypes, WorkerJobRequestTypes } from './logic/constants';
 
 // types
 export type { WorkerJobQueueProps } from './worker-job-queue';

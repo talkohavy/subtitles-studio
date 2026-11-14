@@ -1,7 +1,6 @@
-import type { ModelDownloadProgress } from '@src/common/types';
+import type { ModelDownloadProgress, TranscribedWord, TranscriptionStageValues } from '@subtitles-studio/shared';
 import type { WorkerCancelRequest, WorkerJob, WorkerLifecycleEvent, WorkerProcess } from '@src/lib/worker-job-queue';
 import type {
-  TranscriptionStageValues,
   TranscriptionWorkerEventTypes,
   TranscriptionWorkerRequestTypes,
   WhisperDtypeValues,
@@ -29,22 +28,6 @@ export type WhisperModelDefinition = {
   runtimes: Array<WhisperRuntime>;
 };
 
-export type TranscribedWord = {
-  /**
-   * Keeps its leading space when a space separates it from the previous word, so joining all words with `''`
-   * restores the transcript (CJK text has no spaces, and punctuation can arrive as a separate word).
-   */
-  text: string;
-  /**
-   * In seconds, from the start of the audio.
-   */
-  start: number;
-  /**
-   * In seconds, from the start of the audio.
-   */
-  end: number;
-};
-
 export type TranscriptionJob = WorkerJob & {
   stage: TranscriptionStageValues;
   modelId: WhisperModelIdValues;
@@ -69,37 +52,6 @@ export type TranscriptionJob = WorkerJob & {
   progress: number;
   modelDownload: ModelDownloadProgress | null;
   words: Array<TranscribedWord>;
-};
-
-export type TranscriptionJobDto = Omit<TranscriptionJob, 'audioPath' | 'words'> & {
-  /**
-   * Position among the jobs waiting for the worker (1 = next). `null` once processing started.
-   */
-  queuePosition: number | null;
-  /**
-   * The words from index `wordsFrom` onward, so pollers only fetch what's new.
-   */
-  words: Array<TranscribedWord>;
-  wordsFrom: number;
-  wordsTotal: number;
-};
-
-export type TranscriptionModelDto = {
-  id: WhisperModelIdValues;
-  name: string;
-  description: string;
-  approximateSizeMb: number;
-  isDownloaded: boolean;
-};
-
-export type TranscriptionOptionsDto = {
-  defaultModelId: WhisperModelIdValues;
-  maxUploadBytes: number;
-  models: Array<TranscriptionModelDto>;
-  /**
-   * The language codes a transcription can be requested in, besides `auto`.
-   */
-  languages: ReadonlyArray<string>;
 };
 
 export type TranscribeTask = {

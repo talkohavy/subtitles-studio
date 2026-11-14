@@ -86,8 +86,6 @@ export const WHISPER_MODELS: Record<WhisperModelIdValues, WhisperModelDefinition
   },
 };
 
-export const AUTO_DETECT_LANGUAGE = 'auto';
-
 /**
  * Every language Whisper was trained on (ISO 639-1 where one exists). `yue` (Cantonese) needs a large-v3 model.
  * Not auto-formatted: one language per line would make this list 100 lines long.
@@ -101,18 +99,6 @@ export const WHISPER_LANGUAGE_CODES = [
   'yi', 'lo', 'uz', 'fo', 'ht', 'ps', 'tk', 'nn', 'mt', 'sa', 'lb', 'my', 'bo', 'tl', 'mg', 'as', 'tt', 'haw', 'ln',
   'ha', 'ba', 'jw', 'su', 'yue',
 ] as const;
-
-export const TranscriptionStage = {
-  Waiting: 'waiting',
-  LoadingModel: 'loading-model',
-  DetectingLanguage: 'detecting-language',
-  Transcribing: 'transcribing',
-  Done: 'done',
-} as const;
-
-type TypeOfTranscriptionStage = typeof TranscriptionStage;
-export type TranscriptionStageKeys = keyof TypeOfTranscriptionStage;
-export type TranscriptionStageValues = TypeOfTranscriptionStage[TranscriptionStageKeys];
 
 /**
  * Besides the requests every worker understands (see `WorkerJobRequestTypes`).

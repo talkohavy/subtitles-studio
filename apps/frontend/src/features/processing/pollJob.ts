@@ -1,6 +1,6 @@
+import { JobStatuses, type JobStatusValues } from '@subtitles-studio/shared';
 import { sleep } from '@src/common/utils/sleep';
 import { ApiError } from '@src/lib/api/api-error';
-import { JobStatuses, type JobStatusValues } from '@src/lib/api/types';
 
 const POLL_INTERVAL_MS = 750;
 const MAX_CONSECUTIVE_POLL_ERRORS = 5;

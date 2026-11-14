@@ -1,14 +1,9 @@
 import { readFile } from 'fs/promises';
+import { AUTO_DETECT_LANGUAGE, TranscriptionStages } from '@subtitles-studio/shared';
 import { getErrorMessage } from '@src/common/utils/getErrorMessage';
 import { LogLevel } from '@src/lib/logger';
 import { WorkerJobEventTypes, WorkerJobRequestTypes } from '@src/lib/worker-job-queue';
-import {
-  AUTO_DETECT_LANGUAGE,
-  TranscriptionStage,
-  TranscriptionWorkerEventTypes,
-  TranscriptionWorkerRequestTypes,
-  WHISPER_SAMPLE_RATE,
-} from '../constants';
+import { TranscriptionWorkerEventTypes, TranscriptionWorkerRequestTypes, WHISPER_SAMPLE_RATE } from '../constants';
 import { decodeWav } from '../utils/audio/decodeWav';
 import { downmixToMono } from '../utils/audio/downmixToMono';
 import { resampleAudio } from '../utils/audio/resampleAudio';
@@ -55,7 +50,7 @@ async function runTask(task: TranscribeTask) {
 
     const language = await resolveLanguage({ task, samples, windows });
 
-    send({ type: TranscriptionWorkerEventTypes.Stage, jobId, stage: TranscriptionStage.Transcribing });
+    send({ type: TranscriptionWorkerEventTypes.Stage, jobId, stage: TranscriptionStages.Transcribing });
 
     await transcribeWindows({ jobId, samples, windows, language });
 
@@ -90,7 +85,7 @@ async function loadAudio(audioPath: string): Promise<Float32Array> {
 async function loadModel(task: TranscribeTask) {
   const { jobId, repo, runtimes, modelsDir, allowRemoteModels } = task;
 
-  send({ type: TranscriptionWorkerEventTypes.Stage, jobId, stage: TranscriptionStage.LoadingModel });
+  send({ type: TranscriptionWorkerEventTypes.Stage, jobId, stage: TranscriptionStages.LoadingModel });
 
   const runtime = await engine.load({
     repo,
@@ -135,7 +130,7 @@ async function resolveLanguage(props: ResolveLanguageProps): Promise<string> {
     return 'en';
   }
 
-  send({ type: TranscriptionWorkerEventTypes.Stage, jobId, stage: TranscriptionStage.DetectingLanguage });
+  send({ type: TranscriptionWorkerEventTypes.Stage, jobId, stage: TranscriptionStages.DetectingLanguage });
 
   const windowSamples = windows.map((window) => samples.subarray(window.start, window.end));
   const { language, probability } = await engine.detectLanguage({ windows: windowSamples });

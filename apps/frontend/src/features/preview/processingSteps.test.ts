@@ -1,5 +1,5 @@
+import { AUTO_DETECT_LANGUAGE, JobStatuses, TranscriptionStages, TranslationStages } from '@subtitles-studio/shared';
 import { describe, expect, it } from 'vite-plus/test';
-import { AUTO_DETECT_LANGUAGE, JobStatuses, TranscriptionStages, TranslationStages } from '@src/lib/api/types';
 import {
   ProcessingTasks,
   SessionPhases,

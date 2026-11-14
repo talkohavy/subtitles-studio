@@ -1,0 +1,15 @@
+{
+  "name": "@subtitles-studio/shared",
+  "version": "1.0.0",
+  "private": true,
+  "description": "The API contract between the backend and the frontend: response shapes and the constants they use.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "tsc": "tsc -p tsconfig.json"
+  },
+  "devDependencies": {
+    "typescript": "^6.0.3"
+  }
+}

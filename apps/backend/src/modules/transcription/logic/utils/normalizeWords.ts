@@ -1,4 +1,4 @@
-import type { TranscribedWord } from '../../types';
+import type { TranscribedWord } from '@subtitles-studio/shared';
 
 /**
  * A word as transformers.js returns it with `return_timestamps: 'word'`. Timestamps are relative to the window.

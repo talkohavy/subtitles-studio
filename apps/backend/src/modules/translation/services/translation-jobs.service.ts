@@ -1,8 +1,8 @@
-import { JobStatuses, WorkerJobQueue, type WorkerJobQueueLogger } from '@src/lib/worker-job-queue';
+import { JobStatuses, TranslationStages } from '@subtitles-studio/shared';
+import { WorkerJobQueue, type WorkerJobQueueLogger } from '@src/lib/worker-job-queue';
 import {
   NLLB_LANGUAGE_CODES,
   TRANSLATION_MODEL,
-  TranslationStages,
   TranslationWorkerEventTypes,
   TranslationWorkerRequestTypes,
 } from '../logic/constants';

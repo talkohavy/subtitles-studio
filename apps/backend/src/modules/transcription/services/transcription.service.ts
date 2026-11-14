@@ -10,14 +10,9 @@ import { isModelDownloaded } from '../logic/utils/isModelDownloaded';
 import { resolveRuntimes } from '../logic/utils/resolveRuntimes';
 import { MaxBytesExceededError, saveStreamToFile } from '../logic/utils/saveStreamToFile';
 import type { Readable } from 'stream';
+import type { TranscriptionJobDto, TranscriptionModelDto, TranscriptionOptionsDto } from '@subtitles-studio/shared';
 import type { TranscriptionConfig } from '@src/plugins/config-service';
-import type {
-  TranscriptionJob,
-  TranscriptionJobDto,
-  TranscriptionModelDto,
-  TranscriptionOptionsDto,
-  WhisperModelDefinition,
-} from '../types';
+import type { TranscriptionJob, WhisperModelDefinition } from '../types';
 import type { TranscriptionJobsService } from './transcription-jobs.service';
 
 type TranscriptionServiceProps = {

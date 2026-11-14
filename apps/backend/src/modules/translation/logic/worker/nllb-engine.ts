@@ -1,7 +1,7 @@
 import { env, pipeline, type TranslationPipeline } from '@huggingface/transformers';
 import { createDownloadProgressHandler } from '@src/common/utils/createDownloadProgressHandler';
 import { trimShortLineTranslation } from '../utils/trimShortLineTranslation';
-import type { ModelDownloadProgress } from '@src/common/types';
+import type { ModelDownloadProgress } from '@subtitles-studio/shared';
 
 type LoadProps = {
   repo: string;

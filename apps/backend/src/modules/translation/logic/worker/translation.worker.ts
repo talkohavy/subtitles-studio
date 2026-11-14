@@ -1,6 +1,7 @@
+import { TranslationStages } from '@subtitles-studio/shared';
 import { getErrorMessage } from '@src/common/utils/getErrorMessage';
 import { WorkerJobEventTypes, WorkerJobRequestTypes } from '@src/lib/worker-job-queue';
-import { TranslationStages, TranslationWorkerEventTypes, TranslationWorkerRequestTypes } from '../constants';
+import { TranslationWorkerEventTypes, TranslationWorkerRequestTypes } from '../constants';
 import { NllbEngine } from './nllb-engine';
 import type { TranslateTask, TranslationWorkerEvent, TranslationWorkerRequest } from '../../types';
 

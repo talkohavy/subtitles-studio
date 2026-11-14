@@ -1,14 +1,14 @@
 import { parseApiResponse, toApiError } from './api-error';
 import { deleteInBackground, requestJson } from './requestJson';
-import type { TranscriptionJob, TranscriptionOptions } from './types';
+import type { TranscriptionJobDto, TranscriptionOptionsDto } from '@subtitles-studio/shared';
 
 const API_PATHS = {
   transcriptions: '/api/transcriptions',
   transcriptionOptions: '/api/transcription-options',
 } as const;
 
-export async function fetchTranscriptionOptions(signal?: AbortSignal): Promise<TranscriptionOptions> {
-  const options = await requestJson<TranscriptionOptions>({ url: API_PATHS.transcriptionOptions, signal });
+export async function fetchTranscriptionOptions(signal?: AbortSignal): Promise<TranscriptionOptionsDto> {
+  const options = await requestJson<TranscriptionOptionsDto>({ url: API_PATHS.transcriptionOptions, signal });
 
   return options;
 }
@@ -30,7 +30,7 @@ type CreateTranscriptionProps = {
 /**
  * Uploads the audio and queues its transcription. Uses XHR, since `fetch` can't report upload progress.
  */
-export async function createTranscription(props: CreateTranscriptionProps): Promise<TranscriptionJob> {
+export async function createTranscription(props: CreateTranscriptionProps): Promise<TranscriptionJobDto> {
   const { wav, language, modelId, onUploadProgress, signal } = props;
 
   signal.throwIfAborted();
@@ -39,7 +39,7 @@ export async function createTranscription(props: CreateTranscriptionProps): Prom
 
   if (modelId) query.set('model', modelId);
 
-  const job = await new Promise<TranscriptionJob>((resolve, reject) => {
+  const job = await new Promise<TranscriptionJobDto>((resolve, reject) => {
     const request = new XMLHttpRequest();
 
     function abort() {
@@ -63,7 +63,7 @@ export async function createTranscription(props: CreateTranscriptionProps): Prom
       }
 
       try {
-        resolve(parseApiResponse<TranscriptionJob>({ status, body }));
+        resolve(parseApiResponse<TranscriptionJobDto>({ status, body }));
       } catch (error) {
         reject(error);
       }
@@ -90,11 +90,11 @@ type FetchTranscriptionProps = {
   signal: AbortSignal;
 };
 
-export async function fetchTranscription(props: FetchTranscriptionProps): Promise<TranscriptionJob> {
+export async function fetchTranscription(props: FetchTranscriptionProps): Promise<TranscriptionJobDto> {
   const { id, wordsFrom, signal } = props;
 
   const url = `${API_PATHS.transcriptions}/${encodeURIComponent(id)}?wordsFrom=${wordsFrom}`;
-  const job = await requestJson<TranscriptionJob>({ url, signal });
+  const job = await requestJson<TranscriptionJobDto>({ url, signal });
 
   return job;
 }

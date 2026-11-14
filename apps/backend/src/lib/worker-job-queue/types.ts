@@ -1,5 +1,6 @@
+import type { JobStatusValues } from '@subtitles-studio/shared';
 import type { ILogger, LogLevelValues } from '@src/lib/logger';
-import type { JobStatusValues, WorkerJobEventTypes, WorkerJobRequestTypes } from './logic/constants';
+import type { WorkerJobEventTypes, WorkerJobRequestTypes } from './logic/constants';
 
 /**
  * The fields the queue manages; each kind of job adds its own.

@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
+import { AUTO_DETECT_LANGUAGE } from '@subtitles-studio/shared';
 import { TriangleAlert } from 'lucide-react';
-import { AUTO_DETECT_LANGUAGE } from '@src/lib/api/types';
 import { SelectField, type SelectOption } from '../../components/ui/SelectField';
 import { useAppDispatch, useAppSelector } from '../../store';
 import { selectSettings } from '../../store/selectors';

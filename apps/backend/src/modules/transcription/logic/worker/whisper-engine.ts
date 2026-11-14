@@ -8,7 +8,7 @@ import {
 import { createDownloadProgressHandler } from '@src/common/utils/createDownloadProgressHandler';
 import { getErrorMessage } from '@src/common/utils/getErrorMessage';
 import { WHISPER_SAMPLE_RATE, WhisperDevice } from '../constants';
-import type { ModelDownloadProgress } from '@src/common/types';
+import type { ModelDownloadProgress } from '@subtitles-studio/shared';
 import type { WhisperRuntime } from '../../types';
 import type { RawWordChunk } from '../utils/normalizeWords';
 

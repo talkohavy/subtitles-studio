@@ -1,5 +1,5 @@
 import type { ProgressInfo } from '@huggingface/transformers';
-import type { ModelDownloadProgress } from '../types';
+import type { ModelDownloadProgress } from '@subtitles-studio/shared';
 
 type CreateDownloadProgressHandlerProps = {
   /**
