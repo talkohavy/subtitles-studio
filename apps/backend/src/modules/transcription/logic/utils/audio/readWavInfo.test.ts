@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vite-plus/test';
 import { InvalidAudioError } from './invalid-audio.error';
 import { readWavInfo } from './readWavInfo';
 import { createWavBuffer } from './test-utils/createWavBuffer';

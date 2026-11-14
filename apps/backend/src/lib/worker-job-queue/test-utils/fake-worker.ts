@@ -1,4 +1,5 @@
 import { EventEmitter } from 'events';
+import { vi } from 'vite-plus/test';
 import type { WorkerProcess } from '../types';
 
 /**
@@ -11,13 +12,13 @@ export class FakeWorker<TRequest = unknown, TEvent = unknown>
   connected = true;
   readonly sentMessages: Array<TRequest> = [];
 
-  send = jest.fn((message: TRequest) => {
+  send = vi.fn((message: TRequest) => {
     this.sentMessages.push(message);
 
     return true;
   });
 
-  kill = jest.fn(() => {
+  kill = vi.fn(() => {
     this.connected = false;
 
     return true;
@@ -35,11 +36,11 @@ export class FakeWorker<TRequest = unknown, TEvent = unknown>
 
 export function createLoggerMock() {
   return {
-    debug: jest.fn(),
-    log: jest.fn(),
-    info: jest.fn(),
-    warn: jest.fn(),
-    error: jest.fn(),
-    fatal: jest.fn(),
+    debug: vi.fn(),
+    log: vi.fn(),
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    fatal: vi.fn(),
   };
 }

@@ -1,5 +1,6 @@
 import express, { type Application } from 'express';
 import request from 'supertest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import { API_PATHS, StatusCodes } from '@src/common/constants';
 import { HealthCheckController } from './health-check.controller';
 
@@ -10,8 +11,8 @@ describe('HealthCheckController', () => {
     app = express() as unknown as Application;
 
     app.logger = {
-      info: jest.fn(),
-      error: jest.fn(),
+      info: vi.fn(),
+      error: vi.fn(),
     } as any;
 
     const controller = new HealthCheckController(app);
@@ -19,7 +20,7 @@ describe('HealthCheckController', () => {
   });
 
   afterEach(() => {
-    jest.clearAllMocks();
+    vi.clearAllMocks();
   });
 
   it('should return status OK when health check endpoint is called', async () => {

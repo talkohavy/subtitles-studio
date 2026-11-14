@@ -1,6 +1,7 @@
 import { access, mkdtemp, rm, writeFile } from 'fs/promises';
 import os from 'os';
 import path from 'path';
+import { afterEach, beforeEach, describe, expect, it } from 'vite-plus/test';
 import { createLoggerMock, FakeWorker } from '@src/lib/worker-job-queue/test-utils/fake-worker';
 import { WHISPER_MODELS } from '../logic/constants';
 import { TranscriptionJobsService } from './transcription-jobs.service';

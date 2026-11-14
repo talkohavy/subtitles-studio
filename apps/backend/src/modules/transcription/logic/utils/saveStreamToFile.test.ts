@@ -2,6 +2,7 @@ import { mkdtemp, readFile, rm } from 'fs/promises';
 import os from 'os';
 import path from 'path';
 import { Readable } from 'stream';
+import { afterEach, beforeEach, describe, expect, it } from 'vite-plus/test';
 import { MaxBytesExceededError, saveStreamToFile } from './saveStreamToFile';
 
 describe('saveStreamToFile', () => {

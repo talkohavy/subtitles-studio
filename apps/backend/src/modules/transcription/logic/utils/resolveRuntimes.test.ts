@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vite-plus/test';
 import { resolveRuntimes } from './resolveRuntimes';
 import type { WhisperRuntime } from '../../types';
 

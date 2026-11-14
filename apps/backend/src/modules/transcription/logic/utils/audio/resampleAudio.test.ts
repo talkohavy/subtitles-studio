@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vite-plus/test';
 import { resampleAudio } from './resampleAudio';
 
 describe('resampleAudio', () => {

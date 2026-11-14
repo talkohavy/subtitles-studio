@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vite-plus/test';
 import { WHISPER_LANGUAGE_CODES } from '@src/modules/transcription/logic/constants';
 import { TRANSLATION_LANGUAGE_CODES } from './constants';
 

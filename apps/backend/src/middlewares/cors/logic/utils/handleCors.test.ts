@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vite-plus/test';
 import { StatusCodes } from '@src/common/constants';
 import { handleCors } from './handleCors';
 

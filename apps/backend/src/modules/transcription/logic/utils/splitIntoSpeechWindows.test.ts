@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vite-plus/test';
 import { splitIntoSpeechWindows } from './splitIntoSpeechWindows';
 
 const SAMPLE_RATE = 16_000;

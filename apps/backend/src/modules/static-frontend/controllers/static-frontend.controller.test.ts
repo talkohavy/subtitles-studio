@@ -3,6 +3,7 @@ import os from 'os';
 import path from 'path';
 import express, { type Application } from 'express';
 import request from 'supertest';
+import { afterEach, beforeEach, describe, expect, it } from 'vite-plus/test';
 import { StatusCodes } from '@src/common/constants';
 import { pathNotFoundHandler } from '../../../middlewares/pathNotFoundHandler.middleware';
 import { StaticFrontendController } from './static-frontend.controller';

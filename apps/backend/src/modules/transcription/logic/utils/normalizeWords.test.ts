@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vite-plus/test';
 import { normalizeWords, type RawWordChunk } from './normalizeWords';
 
 type ChunkProps = {

@@ -11,7 +11,7 @@
     // ------------------
     "module": "preserve", // <--- defaults to `commonjs`. Specify what module code is generated.
     "typeRoots": ["node_modules/@types"], // Specify multiple folders that act like './node_modules/@types'.
-    "types": ["jest", "node"], // ---> Specify type package names to be included without being referenced in a source file.
+    "types": ["node"], // ---> Specify type package names to be included without being referenced in a source file.
     "paths": {
       "@src/*": ["./src/*"]
     },
@@ -25,13 +25,13 @@
     // ---------------
     // Section 5: Emit
     // ---------------
-    "rootDir": ".", // Explicit root covering src/, toolbox/tests/, and jest.config.js.
+    "rootDir": ".", // Explicit root covering src/, toolbox/tests/, and vite.config.ts.
 
     // ------------------------
     // Section 7: Type Checking
     // ------------------------
     "noImplicitAny": false // <--- Enable error reporting for expressions and declarations with an implied 'any' type.
   },
-  "include": ["src", "jest.config.ts", "toolbox"],
+  "include": ["src", "vite.config.ts", "toolbox"],
   "exclude": ["node_modules", "dist"]
 }

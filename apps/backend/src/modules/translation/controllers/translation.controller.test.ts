@@ -3,6 +3,7 @@ import os from 'os';
 import path from 'path';
 import express, { type Application } from 'express';
 import request from 'supertest';
+import { afterEach, beforeEach, describe, expect, it } from 'vite-plus/test';
 import { API_PATHS, StatusCodes } from '@src/common/constants';
 import { createLoggerMock, FakeWorker } from '@src/lib/worker-job-queue/test-utils/fake-worker';
 import { errorHandler } from '../../../middlewares/errorHandler.middleware';

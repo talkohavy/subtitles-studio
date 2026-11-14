@@ -1,5 +1,6 @@
 import express, { type Application } from 'express';
 import request from 'supertest';
+import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from 'vite-plus/test';
 import { StatusCodes } from '@src/common/constants';
 import { NotFoundError } from '@src/core/errors';
 import { errorHandler } from './errorHandler.middleware';
@@ -9,8 +10,8 @@ describe('errorHandler', () => {
 
   beforeEach(() => {
     app = express() as unknown as Application;
-    app.logger = { info: jest.fn(), warn: jest.fn(), error: jest.fn() } as any;
-    jest.spyOn(console, 'error').mockImplementation(() => {});
+    app.logger = { info: vi.fn(), warn: vi.fn(), error: vi.fn() } as any;
+    vi.spyOn(console, 'error').mockImplementation(() => {});
 
     app.use(express.json());
     app.get('/missing', () => {
@@ -26,7 +27,7 @@ describe('errorHandler', () => {
   });
 
   afterEach(() => {
-    jest.restoreAllMocks();
+    vi.restoreAllMocks();
   });
 
   it('should answer an expected error with its status and message, and log it as a warning', async () => {
@@ -34,8 +35,8 @@ describe('errorHandler', () => {
     const actualResult = {
       status: response.status,
       body: response.body,
-      warnings: (app.logger.warn as jest.Mock).mock.calls,
-      errorCount: (app.logger.error as jest.Mock).mock.calls.length,
+      warnings: (app.logger.warn as Mock).mock.calls,
+      errorCount: (app.logger.error as Mock).mock.calls.length,
     };
 
     const expectedResult = {
@@ -49,7 +50,7 @@ describe('errorHandler', () => {
 
   it('should hide an unexpected error’s message from the client, and log the error itself', async () => {
     const response = await request(app).get('/broken');
-    const [loggedMessage, loggedData] = (app.logger.error as jest.Mock).mock.calls[0];
+    const [loggedMessage, loggedData] = (app.logger.error as Mock).mock.calls[0] ?? [];
     const actualResult = {
       status: response.status,
       revealsDetails: JSON.stringify(response.body).includes('secret'),

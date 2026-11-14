@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vite-plus/test';
 import { decodeWav } from './decodeWav';
 import { createWavBuffer } from './test-utils/createWavBuffer';
 

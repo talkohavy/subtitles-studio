@@ -9,8 +9,8 @@
     "build": "node build.config.mjs",
     "start": "node --env-file-if-exists=.env dist/index.js",
     "tsc": "tsc -p tsconfig.json",
-    "test": "jest",
-    "test:cov": "jest --coverage",
+    "test": "vp test run",
+    "test:cov": "vp test run --coverage",
     "check": "pnpm run tsc && pnpm run test"
   },
   "license": "ISC",
@@ -25,15 +25,14 @@
   "devDependencies": {
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
-    "@types/jest": "^30.0.0",
     "@types/node": "^26.6.5",
     "@types/supertest": "^7.2.1",
+    "@vitest/coverage-v8": "5.0.5",
     "esbuild": "^0.28.2",
-    "jest": "^30.5.2",
-    "jsonc-parser": "^3.3.1",
     "supertest": "^7.3.1",
-    "ts-jest": "^29.4.14",
     "tsx": "^4.23.15",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "vite": "catalog:",
+    "vite-plus": "catalog:"
   }
 }
