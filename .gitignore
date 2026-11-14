@@ -1,12 +1,36 @@
+# Dependencies
 **/node_modules
-**/dist
-**/coverage
-**/.DS_Store
-**/*.log
-**/*.tsbuildinfo
-**/.env
-!**/.env.example
 .pnpm-store
+
+# Build & test output
+**/dist
+**/dist-ssr
+**/coverage
+**/.vitest
+**/*.tsbuildinfo
+**/public/sw.js
+
+# Logs
+**/logs
+**/*.log
+
+# Environment
+**/.env
+**/.env.*
+**/*.local
+!**/.env.example
+
+# Editors & OS
+**/.idea
+**/.DS_Store
+**/*.suo
+**/*.ntvs*
+**/*.njsproj
+**/*.sln
+**/*.sw?
+
+# Scratch
+**/_ignore_
 .spike
 
 # Backend runtime data: uploaded audio and downloaded Whisper models
