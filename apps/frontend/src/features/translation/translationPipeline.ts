@@ -17,8 +17,8 @@ import { undoNotifiedChange } from '../history/historyThunks';
 import { getLanguageName } from '../new-video/languages';
 import { pollJob } from '../processing/pollJob';
 import { finishRun, startRun, type ProcessingRun } from '../processing/processingRun';
-import type { AppDispatch, AppThunk, RootState } from '../../store';
 import type { TranslationJob } from '@src/lib/api/types';
+import type { AppDispatch, AppThunk, RootState } from '../../store';
 
 /**
  * How many of the latest translated sentences are shown while translating.

@@ -30,11 +30,11 @@ import { pollJob } from '../processing/pollJob';
 import { finishRun, startRun, stopActiveRun, type ProcessingRun } from '../processing/processingRun';
 import { addSubtitlesFile } from '../subtitles/subtitlesFileThunks';
 import { translateNewSubtitles } from '../translation/translationPipeline';
-import type { AppDispatch, AppThunk, RootState } from '../../store';
 import type { TranscriptionJob } from '@src/lib/api/types';
 import type { CaptionLengthValues } from '@src/lib/subtitles/constants';
 import type { SubtitlesFile } from '@src/lib/subtitles/import/readSubtitlesFile';
 import type { Word } from '@src/lib/subtitles/types';
+import type { AppDispatch, AppThunk, RootState } from '../../store';
 
 const PROGRESS_DISPATCH_INTERVAL_MS = 100;
 const TRANSCRIPT_PREVIEW_WORDS = 30;

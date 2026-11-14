@@ -1,6 +1,6 @@
 import { parseJson } from '@src/common/utils/parseJson';
-import type { SettingsState } from './slices/settings.slice';
 import type { CanvasSettings, SubtitleStyle } from '@src/lib/renderer/types';
+import type { SettingsState } from './slices/settings.slice';
 
 const STORAGE_KEYS = {
   settings: 'subtitles-studio:settings:v1',

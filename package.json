@@ -10,14 +10,19 @@
     "build": "pnpm --filter frontend run build && pnpm --filter backend run build",
     "start": "pnpm --filter backend run start",
     "test": "pnpm --recursive run test",
-    "lint": "pnpm --recursive run lint",
+    "lint": "vp lint",
+    "lint:fix": "vp lint --fix",
+    "format": "vp fmt --check",
+    "format:fix": "vp fmt --write",
     "tsc": "pnpm --recursive run tsc",
-    "check": "pnpm --recursive run check",
+    "check": "pnpm run lint && pnpm run format && pnpm --recursive run check",
     "clean": "rm -rf node_modules apps/*/node_modules packages/*/node_modules"
   },
   "devDependencies": {
     "@types/node": "^26.6.5",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "vite": "catalog:",
+    "vite-plus": "catalog:"
   },
   "engines": {
     "node": ">=22.12.0"

@@ -19,9 +19,9 @@ import { ExportQualities, type ExportQualityValues } from './constants';
 import { runCancellable } from './extractAudio';
 import { AudioNotExportableError, MediaError } from './media-error';
 import { openInput } from './openInput';
-import type { ExportDestination, ExportResult } from './exportDestination';
 import type { CanvasSettings, SubtitleStyle } from '@src/lib/renderer/types';
 import type { Cue } from '@src/lib/subtitles/types';
+import type { ExportDestination, ExportResult } from './exportDestination';
 
 type ExportVideoProps = {
   file: File;

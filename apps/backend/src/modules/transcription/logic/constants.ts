@@ -90,9 +90,9 @@ export const AUTO_DETECT_LANGUAGE = 'auto';
 
 /**
  * Every language Whisper was trained on (ISO 639-1 where one exists). `yue` (Cantonese) needs a large-v3 model.
+ * Not auto-formatted: one language per line would make this list 100 lines long.
  */
 // prettier-ignore
-// biome-ignore format: one language per line would make this list 100 lines long
 export const WHISPER_LANGUAGE_CODES = [
   'en', 'zh', 'de', 'es', 'ru', 'ko', 'fr', 'ja', 'pt', 'tr', 'pl', 'ca', 'nl', 'ar', 'sv', 'it', 'id', 'hi', 'fi',
   'vi', 'he', 'uk', 'el', 'ms', 'cs', 'ro', 'da', 'hu', 'ta', 'no', 'th', 'ur', 'hr', 'bg', 'lt', 'la', 'mi', 'ml',

@@ -4,12 +4,8 @@
   "version": "1.0.0",
   "scripts": {
     "clean": "rm -rf node_modules",
-    "lint": "vp lint",
-    "lint:fix": "vp lint --fix",
-    "format": "vp fmt . --check",
-    "format:fix": "vp fmt . --write",
     "test": "vp test run",
-    "check": "pnpm run lint && pnpm run format && pnpm run tsc && pnpm run test",
+    "check": "pnpm run tsc && pnpm run test",
     "tsc": "tsc -p tsconfig.json",
     "dev": "vp dev --host",
     "build": "vp build",
