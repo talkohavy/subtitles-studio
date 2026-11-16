@@ -3,7 +3,12 @@ import { CircleCheck, CircleExclamationPoint, Download } from 'lucide-react';
 import { downloadBlob, getBaseFileName } from '@src/common/utils/downloadBlob';
 import { formatTime } from '@src/common/utils/formatTime';
 import { getErrorMessage, isAbortError } from '@src/common/utils/getErrorMessage';
-import { ExportQualities, type ExportQualityValues } from '@src/lib/media/constants';
+import {
+  ExportQualities,
+  SubtitleModes,
+  type ExportQualityValues,
+  type SubtitleModeValues,
+} from '@src/lib/media/constants';
 import {
   BRAVE_FILE_SAVING_FLAG,
   IS_BRAVE_WITHOUT_FILE_SAVING,
@@ -42,6 +47,17 @@ const QUALITY_OPTIONS: ReadonlyArray<{ value: ExportQualityValues; label: string
   { value: ExportQualities.High, label: 'High' },
 ];
 
+const SUBTITLE_MODE_OPTIONS: ReadonlyArray<{ value: SubtitleModeValues; label: string }> = [
+  { value: SubtitleModes.BurnedIn, label: 'Burned in' },
+  { value: SubtitleModes.Track, label: 'As a track' },
+];
+
+const DESCRIPTIONS: Record<SubtitleModeValues, string> = {
+  [SubtitleModes.BurnedIn]: 'The video is re-encoded with the subtitles burned in, right here in your browser.',
+  [SubtitleModes.Track]:
+    'The video is copied as is, with the subtitles added as a track that players like VLC can turn on and off.',
+};
+
 type ExportState =
   | { status: 'idle' }
   | { status: 'confirmingNoAudio'; message: string }
@@ -56,6 +72,7 @@ const CAN_ENCODE_VIDEO = typeof VideoEncoder !== 'undefined';
 export function ExportDialog() {
   const dispatch = useAppDispatch();
   const isOpen = useAppSelector((state) => state.ui.isExportDialogOpen);
+  const { exportSubtitleMode } = useAppSelector(selectSettings);
   const [exportState, setExportState] = useState<ExportState>(IDLE_STATE);
   const controllerRef = useRef<AbortController | null>(null);
 
@@ -73,7 +90,7 @@ export function ExportDialog() {
       open={isOpen}
       onOpenChange={handleOpenChange}
       title='Export video'
-      description='The video is re-encoded with the subtitles burned in, right here in your browser.'
+      description={DESCRIPTIONS[exportSubtitleMode]}
       isDismissible={!isExporting}
     >
       <ExportDialogContent
@@ -102,15 +119,18 @@ function ExportDialogContent(props: ExportDialogContentProps) {
   const canvasSettings = useAppSelector(selectCanvasSettings);
   const language = useAppSelector(selectLanguage);
   const { video, fileName } = useAppSelector(selectSession);
-  const { exportQuality } = useAppSelector(selectSettings);
+  const { exportQuality, exportSubtitleMode } = useAppSelector(selectSettings);
 
-  const outputSize = video
-    ? computeOutputSize({
-        sourceWidth: video.width,
-        sourceHeight: video.height,
-        aspectRatio: canvasSettings.aspectRatio,
-      })
-    : null;
+  const isBurningIn = exportSubtitleMode === SubtitleModes.BurnedIn;
+  const sourceSize = video ? { width: video.width, height: video.height } : null;
+  const outputSize =
+    video && isBurningIn
+      ? computeOutputSize({
+          sourceWidth: video.width,
+          sourceHeight: video.height,
+          aspectRatio: canvasSettings.aspectRatio,
+        })
+      : sourceSize;
 
   async function startExport(allowDroppingAudio: boolean) {
     const { file } = mediaStore.getSnapshot();
@@ -154,6 +174,7 @@ function ExportDialogContent(props: ExportDialogContentProps) {
         canvasSettings,
         language,
         quality: exportQuality,
+        subtitleMode: exportSubtitleMode,
         allowDroppingAudio,
         destination,
         onProgress: handleProgress,
@@ -297,11 +318,20 @@ function ExportDialogContent(props: ExportDialogContentProps) {
       </dl>
 
       <SegmentedControl
-        label='Quality'
-        value={exportQuality}
-        options={QUALITY_OPTIONS}
-        onChange={(value) => dispatch(settingsChanged({ exportQuality: value }))}
+        label='Subtitles'
+        value={exportSubtitleMode}
+        options={SUBTITLE_MODE_OPTIONS}
+        onChange={(value) => dispatch(settingsChanged({ exportSubtitleMode: value }))}
       />
+
+      {isBurningIn && (
+        <SegmentedControl
+          label='Quality'
+          value={exportQuality}
+          options={QUALITY_OPTIONS}
+          onChange={(value) => dispatch(settingsChanged({ exportQuality: value }))}
+        />
+      )}
 
       {IS_BRAVE_WITHOUT_FILE_SAVING && (
         <p className='text-xs text-zinc-500'>

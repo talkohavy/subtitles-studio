@@ -1,6 +1,11 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import { AUTO_DETECT_LANGUAGE } from '@subtitles-studio/shared';
-import { ExportQualities, type ExportQualityValues } from '@src/lib/media/constants';
+import {
+  ExportQualities,
+  SubtitleModes,
+  type ExportQualityValues,
+  type SubtitleModeValues,
+} from '@src/lib/media/constants';
 import { CaptionLengths, type CaptionLengthValues } from '@src/lib/subtitles/constants';
 
 /**
@@ -21,6 +26,7 @@ export type SettingsState = {
   translationLanguage: string | null;
   captionLength: CaptionLengthValues;
   exportQuality: ExportQualityValues;
+  exportSubtitleMode: SubtitleModeValues;
 };
 
 export const initialSettingsState: SettingsState = {
@@ -29,6 +35,7 @@ export const initialSettingsState: SettingsState = {
   translationLanguage: null,
   captionLength: CaptionLengths.Line,
   exportQuality: ExportQualities.High,
+  exportSubtitleMode: SubtitleModes.BurnedIn,
 };
 
 const settingsSlice = createSlice({

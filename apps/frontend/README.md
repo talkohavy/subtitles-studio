@@ -1,6 +1,6 @@
 # Subtitles Studio · Frontend
 
-The web app of Subtitles Studio: drop a video, get word-timed subtitles generated from its audio (or bring a subtitles file you already have), translate them into another language if you like, edit and style them, and export the video with the subtitles burned in. The video never leaves the browser; only its audio is sent to the [backend](../backend/README.md) to be transcribed (and the subtitles' text, to be translated).
+The web app of Subtitles Studio: drop a video, get word-timed subtitles generated from its audio (or bring a subtitles file you already have), translate them into another language if you like, edit and style them, and export the video with the subtitles burned in or as a subtitle track. The video never leaves the browser; only its audio is sent to the [backend](../backend/README.md) to be transcribed (and the subtitles' text, to be translated).
 
 ## Tech Stack
 
@@ -55,7 +55,7 @@ src/
 │   ├── subtitles/          # Caption list: edit text and timing, split, merge, insert, delete; importing subtitles files
 │   ├── panels/             # Styles, Enhance, Translate, Animate, Font, Layout, Background, Canvas and Help panels
 │   ├── side-panel/         # Tool rail and panel layout
-│   ├── export/             # Export dialog (burned-in MP4) and subtitle file downloads
+│   ├── export/             # Export dialog (MP4, burned in or with a subtitle track) and subtitle file downloads
 │   ├── top-bar/            # New Video, undo/redo, Export
 │   └── shortcuts/          # Keyboard shortcuts
 ├── lib/                # Logic that doesn't depend on React
@@ -87,7 +87,7 @@ src/
 6. **Translate** (optional): when a language is picked under "Translate To", or from the Translate panel later, the captions are regrouped into sentences (long ones are split at a comma) and translated by the backend. Each sentence's translation is shared out among the captions it came from in proportion to how much of the original each held, breaking at punctuation where it can. Captions keep their timing, right-to-left text is detected, and the whole translation is undone in one step (`lib/subtitles/translateCues.ts`, `features/translation/translationPipeline.ts`).
 7. **Edit:** caption edits go through the `project` slice, which has undo/redo; a burst of typing or a whole drag is undone in one step (`store/undoable.ts`).
 8. **Render:** a single renderer draws each frame onto a canvas: the video (reframed to the chosen aspect ratio), the captions, the word highlight and the animations. The preview and the export both use it, so the export looks exactly like the preview (`lib/renderer/renderFrame.ts`).
-9. **Export:** the frames are encoded into an H.264 MP4 with WebCodecs. AAC audio is copied; other audio is re-encoded to AAC when the browser supports it (`lib/media/exportVideo.ts`). The subtitles can also be downloaded as SRT, VTT or plain text.
+9. **Export:** the frames are encoded into an H.264 MP4 with WebCodecs. AAC audio is copied; other audio is re-encoded to AAC when the browser supports it (`lib/media/exportVideo.ts`). Or, with the subtitles as a track, the video is copied as is and the subtitles go next to it as a WebVTT track (unstyled, and without the canvas settings), which VLC plays. The subtitles can also be downloaded as SRT, VTT or plain text.
 
 The style, canvas settings, language, translation language, model and caption length are saved in `localStorage`. The video and its subtitles aren't, so the app asks before the tab is closed.
 

@@ -38,7 +38,7 @@ export function ExportMenu() {
           <ExportMenuItem
             icon={<Film className='size-4' />}
             title='Video with subtitles'
-            description='MP4 with the captions burned in'
+            description='MP4 with the captions burned in or as a track'
             onSelect={() => dispatch(exportDialogToggled(true))}
           />
           <DropdownMenu.Separator className='my-1.5 h-px bg-zinc-800' />

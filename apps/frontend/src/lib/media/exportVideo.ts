@@ -6,17 +6,23 @@ import {
   Output,
   QUALITY_HIGH,
   QUALITY_MEDIUM,
+  TextSubtitleSource,
   type ConversionAudioOptions,
+  type ConversionVideoOptions,
+  type Input,
   type InputAudioTrack,
   type InputTrack,
+  type InputVideoTrack,
   type Quality,
 } from 'mediabunny';
 import { getFontSampleText } from '@src/lib/fonts/getFontSampleText';
 import { loadFont } from '@src/lib/fonts/loadFont';
 import { computeOutputSize } from '@src/lib/renderer/geometry';
 import { renderFrame } from '@src/lib/renderer/renderFrame';
-import { ExportQualities, type ExportQualityValues } from './constants';
+import { serializeSubtitles, SubtitleFormats } from '@src/lib/subtitles/subtitleFormats';
+import { ExportQualities, SubtitleModes, type ExportQualityValues, type SubtitleModeValues } from './constants';
 import { runCancellable } from './extractAudio';
+import { getTrackLanguageCode } from './getTrackLanguageCode';
 import { AudioNotExportableError, MediaError } from './media-error';
 import { openInput } from './openInput';
 import type { CanvasSettings, SubtitleStyle } from '@src/lib/renderer/types';
@@ -30,6 +36,7 @@ type ExportVideoProps = {
   canvasSettings: CanvasSettings;
   language: string | null;
   quality: ExportQualityValues;
+  subtitleMode: SubtitleModeValues;
   /**
    * Export without the audio when it can't be exported,
    * instead of throwing `AudioNotExportableError`.
@@ -56,90 +63,68 @@ const TOO_LARGE_FOR_MEMORY_MESSAGE =
   'smaller canvas size, or export in Chrome or Edge, which save straight to a file.';
 
 /**
- * Re-encodes the video with the captions drawn into every frame, entirely in the browser. AAC audio is copied as is;
- * other audio becomes AAC when the browser can decode it and encode AAC.
+ * Exports the video with its captions, entirely in the browser. Burned in, the captions are drawn into every frame,
+ * which re-encodes the video at the canvas size. As a track, the video is copied as is (so the canvas settings and
+ * the style don't apply) and the captions go next to it as a WebVTT subtitle track. AAC audio is copied as is; other
+ * audio becomes AAC when the browser can decode it and encode AAC.
  *
  * @throws {AudioNotExportableError} before encoding anything, when the audio would be dropped and
  * `allowDroppingAudio` is off.
  */
 export async function exportVideo(props: ExportVideoProps): Promise<ExportResult> {
-  const { file, cues, style, canvasSettings, language, quality, allowDroppingAudio, destination, onProgress, signal } =
-    props;
+  const {
+    file,
+    cues,
+    style,
+    canvasSettings,
+    language,
+    quality,
+    subtitleMode,
+    allowDroppingAudio,
+    destination,
+    onProgress,
+    signal,
+  } = props;
 
+  const isBurningIn = subtitleMode === SubtitleModes.BurnedIn;
   const input = openInput(file);
+  // Without fast start, the video is written as it's encoded (its index goes at the end), instead of being held in
+  // memory until the end.
+  const output = new Output({ format: new Mp4OutputFormat({ fastStart: false }), target: destination.target });
 
   try {
     const videoTrack = await input.getPrimaryVideoTrack();
 
     if (!videoTrack) throw new MediaError('This file has no video in it.');
 
-    const canDecode = await videoTrack.canDecode();
-
-    if (!canDecode) throw new MediaError('Your browser can’t decode this video. Try Chrome or Edge.');
-
     const audioTrack = await input.getPrimaryAudioTrack();
     const tracks: Array<InputTrack> = audioTrack ? [videoTrack, audioTrack] : [videoTrack];
     const firstTimestamp = await input.getFirstTimestamp(tracks);
-    // Frame timestamps given to `process` start at 0; captions are timed against the video's own timeline.
+    // The output starts at 0, while captions are timed against the video's own timeline.
     const timelineStart = Math.max(0, firstTimestamp);
-
-    const sourceWidth = await videoTrack.getDisplayWidth();
-    const sourceHeight = await videoTrack.getDisplayHeight();
-    const { width, height } = computeOutputSize({ sourceWidth, sourceHeight, aspectRatio: canvasSettings.aspectRatio });
     const encodingQuality = quality === ExportQualities.High ? QUALITY_HIGH : QUALITY_MEDIUM;
     const audioOptions = await getAudioOptions({ audioTrack, quality: encodingQuality });
-    const videoCodec = await getFirstEncodableVideoCodec(['avc', 'hevc', 'vp9', 'av1'], {
-      width,
-      height,
-      quality: encodingQuality,
-    });
-
-    if (!videoCodec) {
-      throw new MediaError(`Your browser can’t encode a ${width}×${height} video. Try a smaller canvas size.`);
-    }
-
-    const fontSampleText = getFontSampleText({ cues, style, language });
-    await loadFont({ fontId: style.fontId, weight: style.fontWeight, text: fontSampleText });
-
-    const canvas = new OffscreenCanvas(width, height);
-    const ctx = canvas.getContext('2d');
-
-    if (!ctx) throw new MediaError('Your browser can’t draw the video frames.');
-
-    // Without fast start, the video is written as it's encoded (its index goes at the end), instead of being held in
-    // memory until the end.
-    const output = new Output({ format: new Mp4OutputFormat({ fastStart: false }), target: destination.target });
+    // Without video options, the video is copied as is.
+    const videoOptions = isBurningIn
+      ? await getBurnInVideoOptions({
+          videoTrack,
+          cues,
+          style,
+          canvasSettings,
+          language,
+          quality: encodingQuality,
+          timelineStart,
+        })
+      : undefined;
+    // A composable conversion leaves the output to us, so that the subtitle track can be added to it.
     const conversion = await Conversion.init({
       input,
       output,
       tracks: 'primary',
-      video: {
-        codec: videoCodec,
-        quality: encodingQuality,
-        forceTranscode: true,
-        allowTransformationMetadata: false,
-        processedWidth: width,
-        processedHeight: height,
-        process: (sample) => {
-          renderFrame({
-            ctx,
-            frameWidth: width,
-            frameHeight: height,
-            drawSource: (rect) => sample.draw(ctx, rect.x, rect.y, rect.width, rect.height),
-            sourceWidth,
-            sourceHeight,
-            time: sample.timestamp + timelineStart,
-            cues,
-            style,
-            canvasSettings,
-            language,
-          });
-
-          return canvas;
-        },
-      },
+      video: videoOptions,
       audio: audioOptions,
       showWarnings: false,
+      composable: !isBurningIn,
     });
 
     if (!conversion.isValid) {
@@ -174,7 +159,11 @@ export async function exportVideo(props: ExportVideoProps): Promise<ExportResult
     };
 
     try {
+      if (!isBurningIn) await startWithSubtitleTrack({ input, output, cues, language, timelineStart });
+
       await runCancellable({ conversion, signal: AbortSignal.any([signal, sizeLimit.signal]) });
+
+      if (!isBurningIn) await output.finalize();
     } finally {
       stopCountingBytes();
     }
@@ -183,11 +172,126 @@ export async function exportVideo(props: ExportVideoProps): Promise<ExportResult
 
     return result;
   } catch (error) {
+    // Does nothing when the conversion already canceled it.
+    await output.cancel();
     await destination.discard();
     throw error;
   } finally {
     input.dispose();
   }
+}
+
+type GetBurnInVideoOptionsProps = {
+  videoTrack: InputVideoTrack;
+  cues: ReadonlyArray<Cue>;
+  style: SubtitleStyle;
+  canvasSettings: CanvasSettings;
+  language: string | null;
+  quality: Quality;
+  timelineStart: number;
+};
+
+/**
+ * Re-encodes the video at the canvas size, with the captions drawn into every frame.
+ */
+async function getBurnInVideoOptions(props: GetBurnInVideoOptionsProps): Promise<ConversionVideoOptions> {
+  const { videoTrack, cues, style, canvasSettings, language, quality, timelineStart } = props;
+
+  const canDecode = await videoTrack.canDecode();
+
+  if (!canDecode) throw new MediaError('Your browser can’t decode this video. Try Chrome or Edge.');
+
+  const sourceWidth = await videoTrack.getDisplayWidth();
+  const sourceHeight = await videoTrack.getDisplayHeight();
+  const { width, height } = computeOutputSize({ sourceWidth, sourceHeight, aspectRatio: canvasSettings.aspectRatio });
+  const videoCodec = await getFirstEncodableVideoCodec(['avc', 'hevc', 'vp9', 'av1'], { width, height, quality });
+
+  if (!videoCodec) {
+    throw new MediaError(`Your browser can’t encode a ${width}×${height} video. Try a smaller canvas size.`);
+  }
+
+  const fontSampleText = getFontSampleText({ cues, style, language });
+  await loadFont({ fontId: style.fontId, weight: style.fontWeight, text: fontSampleText });
+
+  const canvas = new OffscreenCanvas(width, height);
+  const ctx = canvas.getContext('2d');
+
+  if (!ctx) throw new MediaError('Your browser can’t draw the video frames.');
+
+  return {
+    codec: videoCodec,
+    quality,
+    forceTranscode: true,
+    allowTransformationMetadata: false,
+    processedWidth: width,
+    processedHeight: height,
+    process: (sample) => {
+      renderFrame({
+        ctx,
+        frameWidth: width,
+        frameHeight: height,
+        drawSource: (rect) => sample.draw(ctx, rect.x, rect.y, rect.width, rect.height),
+        sourceWidth,
+        sourceHeight,
+        // Frame timestamps given to `process` start at 0.
+        time: sample.timestamp + timelineStart,
+        cues,
+        style,
+        canvasSettings,
+        language,
+      });
+
+      return canvas;
+    },
+  };
+}
+
+type StartWithSubtitleTrackProps = {
+  input: Input;
+  output: Output;
+  cues: ReadonlyArray<Cue>;
+  language: string | null;
+  timelineStart: number;
+};
+
+/**
+ * Adds the captions as a subtitle track and starts the output, with the input's metadata (title, artist, ...) since a
+ * composable conversion doesn't copy it. The whole track is written up front: the muxer interleaves tracks by
+ * timestamp, so a track still open would hold the video back in memory.
+ */
+async function startWithSubtitleTrack(props: StartWithSubtitleTrackProps): Promise<void> {
+  const { input, output, cues, language, timelineStart } = props;
+
+  const subtitleSource = new TextSubtitleSource('webvtt');
+  const languageCode = getTrackLanguageCode(language);
+  output.addSubtitleTrack(subtitleSource, languageCode ? { languageCode } : {});
+
+  const tags = { ...(await input.getMetadataTags()) };
+  delete tags.creationTime;
+  // The input format's own tags, which are junk in another format.
+  delete tags.raw;
+  output.setMetadataTags(tags);
+
+  await output.start();
+
+  const shiftedCues = shiftCues({ cues, offset: -timelineStart });
+  const webVtt = serializeSubtitles({ cues: shiftedCues, format: SubtitleFormats.Vtt });
+  await subtitleSource.add(webVtt);
+  subtitleSource.close();
+}
+
+/**
+ * Moves the cues by `offset` seconds, in start order (which a track needs), cutting off what moves before 0.
+ */
+export function shiftCues(props: { cues: ReadonlyArray<Cue>; offset: number }): Array<Cue> {
+  const { cues, offset } = props;
+
+  const shiftedCues = cues
+    .map((cue) => ({ ...cue, start: Math.max(0, cue.start + offset), end: cue.end + offset }))
+    .filter((cue) => cue.end > cue.start);
+  const sortedCues = shiftedCues.sort((a, b) => a.start - b.start);
+
+  return sortedCues;
 }
 
 type GetAudioOptionsProps = {

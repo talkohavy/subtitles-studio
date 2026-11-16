@@ -4,7 +4,7 @@ Guidance for Claude Code (and other AI agents) when working in this repository.
 
 ## 1. What this project is
 
-The web app of Subtitles Studio: it generates subtitles from a video's audio (transcribed by the backend), lets the user edit and style them, and exports the video with the subtitles burned in. Explained at the [README.md](./README.md) file.
+The web app of Subtitles Studio: it generates subtitles from a video's audio (transcribed by the backend), lets the user edit and style them, and exports the video with the subtitles burned in or as a subtitle track. Explained at the [README.md](./README.md) file.
 
 ## 2. Code Quality Standards
 
